@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace OnlineShoppingPlatform.DataAccess.Entities.Maintenance
+namespace OnlineShoppingPlatform.DataAccess.Maintenance
 {
     public class MaintenanceMode
     {

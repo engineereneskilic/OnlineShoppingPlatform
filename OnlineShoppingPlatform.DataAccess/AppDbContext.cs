@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OnlineShoppingPlatform.DataAccess.Entities;
-using OnlineShoppingPlatform.DataAccess.Entities.Logging;
-using OnlineShoppingPlatform.DataAccess.Entities.Maintenance;
+using OnlineShoppingPlatform.DataAccess.Logging;
+using OnlineShoppingPlatform.DataAccess.Maintenance;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,8 @@ using System.Threading.Tasks;
 
 namespace OnlineShoppingPlatform.DataAccess
 {   // ApplicationUser
-    public class AppDbContext : IdentityDbContext<User>
+    //public class AppDbContext : IdentityDbContext<User>
+    public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -19,7 +20,7 @@ namespace OnlineShoppingPlatform.DataAccess
         }
 
         // DbSet tanımlamaları (Tablolar)
-        public override DbSet<User> Users { get; set; }
+        public DbSet<User> Users { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderProduct> OrderProducts { get; set; }
@@ -31,6 +32,14 @@ namespace OnlineShoppingPlatform.DataAccess
         // Model konfigürasyonu
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
+            modelBuilder.ApplyConfiguration(new ProductConfiguration());
+            modelBuilder.ApplyConfiguration(new OrderConfiguration());
+            modelBuilder.ApplyConfiguration(new OrderProductConfiguration());
+
+            modelBuilder.ApplyConfiguration(new RequestLogConfiguration());
+
+
             base.OnModelCreating(modelBuilder);
 
             // ÖZEL DÜZELTMELER

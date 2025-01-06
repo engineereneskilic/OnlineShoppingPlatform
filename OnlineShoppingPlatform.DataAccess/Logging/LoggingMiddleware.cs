@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OnlineShoppingPlatform.DataAccess.Entities.Logging
+namespace OnlineShoppingPlatform.DataAccess.Logging
 {
     public class LoggingMiddleware
     {

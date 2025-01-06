@@ -1,10 +1,11 @@
 ﻿using OnlineShoppingPlatform.DataAccess.Entities;
+using OnlineShoppingPlatform.DataAccess.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-namespace OnlineShoppingPlatform.DataAccess.Repositories
+namespace OnlineShoppingPlatform.DataAccess.UnitOfWork
 {
     public interface IUnitOfWork : IDisposable
     {
@@ -14,8 +15,15 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
         //IRepository<OrderProduct> OrderProducts { get; }
 
         // Generic repository yöntemi
-        IRepository<T> Repository<T>() where T : class;
+        IRepository<T> Repository<T>() where T : BaseEntity;
 
-        Task<int> CommitAsync(); // Değişiklikleri kaydeder.
+        Task BeginTransaction();
+        // Task asenkron metodların voididir.
+
+        Task CommitTransaction();
+
+        Task RollBackTransaction();
+
+        Task<int> DbSaveChangesAsync(); // Değişiklikleri kaydeder. Kaç işlem yapıldıysa int olarak o döner
     }
 }

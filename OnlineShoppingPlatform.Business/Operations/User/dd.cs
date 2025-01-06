@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OnlineShoppingPlatform.DataAccess.Entities.Services
 {
-    public interface IUserService
+    public interface dd
     {
         Task<User> GetUserByIdAsync(int id);
         Task<List<User>> GetAllUsersAsync();

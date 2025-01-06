@@ -5,10 +5,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace OnlineShoppingPlatform.DataAccess.Entities
 {
-    public class OrderProduct
+    public class OrderProduct : BaseEntity
     {
         public int OrderProductId { get; set; }
 
@@ -27,5 +28,16 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
         // Navigation Properties
         public Order? Order { get; set; } // Sipariş
         public Product? Product { get; set; } // Ürün
+    }
+    public class OrderProductConfiguration : BaseConfigiration<OrderProduct>
+    {
+        public override void Configure(EntityTypeBuilder<OrderProduct> builder)
+        {
+            // ben OrderProductId olsun istiyorum o nedenle bu işlemi yapmadım ama istenirse yapılabilir.
+            //builder.Ignore(x => x.OrderProductId); // id propertyisini görmezden geldik tabloya aktrılmayacak
+            //builder.HasKey("OrderId","ProductId");
+            // composite key oluşturup primary key olarak atadık.
+            base.Configure(builder);
+        }
     }
 }

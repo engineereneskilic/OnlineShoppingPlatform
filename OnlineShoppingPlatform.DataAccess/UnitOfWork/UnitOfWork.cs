@@ -1,15 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using OnlineShoppingPlatform.DataAccess.Entities;
+using OnlineShoppingPlatform.DataAccess.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-namespace OnlineShoppingPlatform.DataAccess.Repositories
+namespace OnlineShoppingPlatform.DataAccess.UnitOfWork
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly AppDbContext _context;
+        private IDbContextTransaction _transaction;
+
 
         // Repository örnekleri
         //public IRepository<User> Users { get; private set; }
@@ -29,13 +33,13 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
         }
 
         // Belirli bir entity için repository döner (Generic yöntem)
-        public IRepository<T> Repository<T>() where T : class
+        public IRepository<T> Repository<T>() where T : BaseEntity
         {
             return new Repository<T>(_context);
         }
 
         // Değişiklikleri veritabanına kaydetmek için
-        public async Task<int> CommitAsync()
+        public async Task<int> DbSaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
         }
@@ -44,8 +48,28 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
         public void Dispose()
         {
             _context.Dispose();
+            // Garbage collector'a sen bunu temizleyebilirsin izni verdiğimiz yer
+            // o an silmiyor, silinebilir yapıyor
+            // GC.Collect()
+            // GC.WaitForPendingFinalizers();
+            // Bu kodlar Garbage collector'ı direk çalıştırır
         }
 
 
+        // TRANSACTIONS
+        public async Task BeginTransaction()
+        {
+            _transaction = await _context.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransaction()
+        {
+            await _context.Database.CommitTransactionAsync();   
+        }
+
+        public async Task RollBackTransaction()
+        {
+            await _transaction.RollbackAsync();
+        }
     }
 }

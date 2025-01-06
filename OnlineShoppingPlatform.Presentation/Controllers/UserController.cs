@@ -53,7 +53,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
         // Kullanıcı güncelleme
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, User user)
+        public async Task<IActionResult> UpdateUser(int id, User user)
         {
             if (id != user.Id)
             {

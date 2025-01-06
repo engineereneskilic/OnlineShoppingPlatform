@@ -1,4 +1,4 @@
-﻿using OnlineShoppingPlatform.DataAccess.Repositories;
+﻿using OnlineShoppingPlatform.DataAccess.UnitOfWork;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +30,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities.Services
             }
 
             // Değişiklikleri kaydet
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.DbSaveChangesAsync();
             return order;
         }
 
@@ -65,7 +65,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities.Services
             }
 
             // Değişiklikleri kaydet
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.DbSaveChangesAsync();
         }
 
         // Siparişi siler
@@ -87,7 +87,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities.Services
 
             // Siparişi sil
             await _unitOfWork.Repository<Order>().DeleteAsync(existingOrder);
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.DbSaveChangesAsync();
         }
 
         // ID'ye göre siparişi getirir

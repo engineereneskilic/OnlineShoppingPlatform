@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace OnlineShoppingPlatform.DataAccess.Entities
 {
-    public class Order
+    public class Order : BaseEntity
     {
         [Key]
         public int OrderId { get; set; } // Primary Key
@@ -25,5 +26,14 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
         // Navigation Properties
         public User? User { get; set; }// Siparişi veren müşteri
         public ICollection<OrderProduct>? OrderProducts { get; set; } // Siparişin ürünleri
+    }
+
+    public class OrderConfiguration : BaseConfigiration<Order>
+    {
+        public override void Configure(EntityTypeBuilder<Order> builder)
+        {
+            base.Configure(builder);
+
+        }
     }
 }

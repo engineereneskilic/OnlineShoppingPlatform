@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OnlineShoppingPlatform.DataAccess.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace OnlineShoppingPlatform.DataAccess.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class Repository<T> : IRepository<T> where T : BaseEntity
     {
         private readonly AppDbContext _context;
         private readonly DbSet<T> _dbSet;
@@ -23,6 +24,7 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
         {
             return await _dbSet.ToListAsync();
         }
+
 
         public async Task<IEnumerable<T>> GetByQueryAsync(Expression<Func<T, bool>> filter)
         {
@@ -44,34 +46,54 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
             return entity;
         }
 
+        public async Task<T> Get(Expression<Func<T, bool>> predicate)
+        {
+            // Try to find the entity by its ID
+            var entity =  _dbSet.FirstOrDefault(predicate);
+
+            // If no entity is found, throw an exception or handle the null case
+            if (entity == null)
+            {
+                throw new InvalidOperationException($"Entity not found.");
+            }
+
+            return entity;
+        }
+
         public async Task AddAsync(T entity)
         {
+            
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
         }
 
+
+
         public async Task UpdateAsync(T entity)
         {
+            entity.ModifiedDate = DateTime.Now;
             _dbSet.Update(entity);
             await _context.SaveChangesAsync();
         }
+
+
 
         public async Task DeleteAsync(int id)
         {
             var entity = await GetByIdAsync(id);
             if (entity != null)
             {
-                _dbSet.Remove(entity);
-                await _context.SaveChangesAsync();
+                await DeleteAsync(entity);
             }
         }
 
         public async Task DeleteAsync(T entity)
         {
+            //entity.ModifiedDate = DateTime.Now;
+            //entity.IsDeleted = true;
+
             _dbSet.Remove(entity);
             await _context.SaveChangesAsync();
         }
-
-    
     }
 }

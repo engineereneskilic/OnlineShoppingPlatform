@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace OnlineShoppingPlatform.DataAccess.Entities
 {
-    public class Product
+    public class Product : BaseEntity
     {
         [Key]
         public int ProductId { get; set; } // Primary Key
@@ -26,5 +27,14 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
 
         // Navigation Property
         public ICollection<OrderProduct>? OrderProducts { get; set; }
+    }
+
+    public class ProductConfiguration : BaseConfigiration<Product>
+    {
+        public override void Configure(EntityTypeBuilder<Product> builder)
+        {
+            base.Configure(builder);
+
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using OnlineShoppingPlatform.DataAccess.Entities;
@@ -7,6 +6,13 @@ using OnlineShoppingPlatform.DataAccess;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using OnlineShoppingPlatform.Business.Operations.User.Dtos;
+using System.Runtime.CompilerServices;
+using OnlineShoppingPlatform.Business.Operations.User;
+using OnlineShoppingPlatform.Presentation.Models;
+using OnlineShoppingPlatform.Presentation.Jwt;
+using OnlineShoppingPlatform.Business.Types;
+using Microsoft.AspNetCore.Authorization;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
@@ -17,65 +23,122 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
 
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        private readonly IUserService _userService;
+
+        public AuthController(AppDbContext context, IConfiguration configuration, IUserService userService)
         {
             _context = context;
             _configuration = configuration;
+
+            _userService = userService;
         }
 
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest loginRequest)
         {
-            var user = _context.Users.SingleOrDefault(u => u.Email == loginRequest.Email);
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = _userService.LoginUser(
+                    new LoginUserDto{ Email = loginRequest.Email, Password = loginRequest.Password }
+                );
+
+            if (!result.IsSucceed)
+            {
+                return Ok(new ServiceMessage()
+                {
+                    IsSucceed = result.IsSucceed,
+                    Message = result.Message
+                });
+            }
+
+            var user = result.Data;
+            var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
             if (user == null)
             {
-                return Unauthorized("Geçersiz kullanıcı adı veya şifre.");
+                throw new ArgumentNullException(nameof(user), "User object cannot be null.");
             }
 
-            // Şifreyi doğrulama (Data Protection kullanarak şifre doğrulama yapılabilir)
-            if (user.Password != loginRequest.Password)
+            if (string.IsNullOrEmpty(user.FirstName) || string.IsNullOrEmpty(user.LastName))
             {
-                return Unauthorized("Geçersiz kullanıcı adı veya şifre.");
+                throw new ArgumentException("User's FirstName and LastName cannot be null or empty.");
             }
 
-            var token = GenerateJwtToken(user);
-            return Ok(new { token });
+            var secretKey = configuration["JwtSettings:SecretKey"];
+            var issuer = configuration["JwtSettings:Issuer"];
+            var audience = configuration["JwtSettings:Audience"];
+            var expireMinutesValue = configuration["JwtSettings:ExpirationMinutes"];
+
+            if (string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience) || string.IsNullOrEmpty(expireMinutesValue))
+            {
+                throw new ArgumentNullException("JwtSettings", "JWT settings cannot be null or empty in the configuration.");
+            }
+
+            if (!int.TryParse(expireMinutesValue, out var expireMinutes))
+            {
+                throw new FormatException("ExpireMinutes in JwtSettings must be a valid integer.");
+            }
+
+            var token = JwtHelper.GenerateJwtToken(new JwtDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                SecretKey = secretKey,
+                Issuer = issuer,
+                Audience = audience,
+                ExpireMinutes = expireMinutes
+            });
+
+            // Bilgiler doğru ise token üretelim
+            return Ok(new LoginResponse()
+            {
+                Message = "Giriş Başarıyla Gerçekleşti",
+                Token = token
+            });
         }
 
-        private string GenerateJwtToken(User user)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(RegisterRequest registerRequest)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings.GetValue<string>("SecretKey");
-
-            if (secretKey == null)
+            if (!ModelState.IsValid)
             {
-                // Handle the null value (e.g., throw an exception or set a default value)
-                throw new ArgumentNullException("SecretKey", "Secret key cannot be null.");
+                return BadRequest(ModelState);
+            }  // TODO: İleride action filter olarak kodlanacak
+            var addUserDto = new AddUserDto
+            {
+                Email = registerRequest.Email,
+                UserName = registerRequest.UserName,
+                FirstName = registerRequest.FirstName,
+                LastName = registerRequest.LastName,
+                Password = registerRequest.Password,
+                BirthDate = registerRequest.BirthDate
+            };
+
+            var result = await _userService.CreateUserAsync(addUserDto);
+
+            if (result.IsSucceed)
+            {
+                return Ok();
+            }
+            else
+            {
+                return BadRequest(result.Message);
             }
 
-            var key = Encoding.UTF8.GetBytes(secretKey);
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.FirstName),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
-            };
 
-            var signingCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(jwtSettings.GetValue<int>("ExpirationMinutes")),
-                Issuer = jwtSettings.GetValue<string>("Issuer"),
-                Audience = jwtSettings.GetValue<string>("Audience"),
-                SigningCredentials = signingCredentials
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
         }
+
+        [HttpGet("me")]
+        [Authorize]
+        public IActionResult GetMyUser()
+        {
+
+            return Ok("Hoşgeldiniz");
+        } 
+
     }
 }

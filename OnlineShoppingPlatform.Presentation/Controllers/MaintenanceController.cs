@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineShoppingPlatform.DataAccess;
 using Microsoft.EntityFrameworkCore;
-using OnlineShoppingPlatform.DataAccess.Entities.Maintenance;
+using OnlineShoppingPlatform.DataAccess.Maintenance;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {

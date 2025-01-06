@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OnlineShoppingPlatform.DataAccess.Entities.Maintenance
+namespace OnlineShoppingPlatform.DataAccess.Maintenance
 {
     public class MaintenanceMiddleware
     {
@@ -61,7 +61,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities.Maintenance
                     }
                 }
 
-                
+
             }
             await _next(context); // Bakım modunda değilse istekleri normal şekilde devam ettir
         }
