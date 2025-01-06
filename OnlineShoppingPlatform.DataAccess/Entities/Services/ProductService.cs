@@ -27,7 +27,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities.Services
             return (await _unitOfWork.Repository<Product>().GetAllAsync()).ToList();
         }
 
-        public async Task<Product> CreateProductAsync(Product product)
+        public async Task<Product> AddProductAsync(Product product)
         {
             await _unitOfWork.Repository<Product>().AddAsync(product);
             await _unitOfWork.DbSaveChangesAsync();

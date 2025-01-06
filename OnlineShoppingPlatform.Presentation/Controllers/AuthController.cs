@@ -9,10 +9,10 @@ using System.Text;
 using OnlineShoppingPlatform.Business.Operations.User.Dtos;
 using System.Runtime.CompilerServices;
 using OnlineShoppingPlatform.Business.Operations.User;
-using OnlineShoppingPlatform.Presentation.Models;
 using OnlineShoppingPlatform.Presentation.Jwt;
 using OnlineShoppingPlatform.Business.Types;
 using Microsoft.AspNetCore.Authorization;
+using OnlineShoppingPlatform.Presentation.Models.Auth;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {

@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OnlineShoppingPlatform.Business.DataProtection;
+using OnlineShoppingPlatform.Business.Operations.Feature;
+using OnlineShoppingPlatform.Business.Operations.Order;
 using OnlineShoppingPlatform.Business.Operations.User;
 using OnlineShoppingPlatform.DataAccess;
 using OnlineShoppingPlatform.DataAccess.Entities;
@@ -152,6 +154,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // UnitOfWork ve Repository için DI yapýlandýrmasý
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+builder.Services.AddScoped<IFeatureService,FeatureManager>(); // her http isteði için yeni bir nesne yaratmak istiyorum
 
 var app = builder.Build();
 

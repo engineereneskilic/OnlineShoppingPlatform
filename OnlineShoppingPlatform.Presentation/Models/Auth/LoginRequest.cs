@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace OnlineShoppingPlatform.Presentation.Models
+namespace OnlineShoppingPlatform.Presentation.Models.Auth
 {
     public class LoginRequest
     {

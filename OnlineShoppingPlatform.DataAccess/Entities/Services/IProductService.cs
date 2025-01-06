@@ -10,7 +10,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities.Services
     {
         Task<Product> GetProductByIdAsync(int id);
         Task<List<Product>> GetAllProductsAsync();
-        Task<Product> CreateProductAsync(Product product);
+        Task<Product> AddProductAsync(Product product);
         Task<Product> UpdateProductAsync(Product product);
         Task DeleteProductAsync(int id);
     }
