@@ -59,7 +59,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
                 Price = addProductDto.Price
             };
 
-            _repository.AddAsync(newproduct);
+            await _repository.AddAsync(newproduct);
 
             try
             {
