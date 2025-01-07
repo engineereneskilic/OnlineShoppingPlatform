@@ -16,7 +16,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
     {
         
         [Key]
-        public int Id { get; set; } // Primary Key
+        public int Id { get; set; } // Primary Key 
 
         [Required(ErrorMessage = "User name is required.")]
         [StringLength(50, ErrorMessage = "First name cannot exceed 50 characters.")]
