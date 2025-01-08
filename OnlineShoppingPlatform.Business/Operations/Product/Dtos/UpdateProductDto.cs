@@ -4,12 +4,13 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using OnlineShoppingPlatform.DataAccess.Entities.Enums;
 
 namespace OnlineShoppingPlatform.Business.Operations.Product.Dtos
 {
-    public class AddProductDto
+    public class UpdateProductDto
     {
+        public int ProductId { get; set; } // Primary Key
+
         [Required(ErrorMessage = "Product name is required.")]
         [StringLength(100, ErrorMessage = "Product name cannot exceed 100 characters.")]
         public string ProductName { get; set; } = string.Empty;  // Ürün adı

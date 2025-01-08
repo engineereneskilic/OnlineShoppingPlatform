@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OnlineShoppingPlatform.DataAccess.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -12,20 +13,19 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
     {
         [Key]
         public int OrderId { get; set; } // Primary Key
-
-        [Required]
         public DateTime OrderDate { get; set; } // Sipariş tarihi
-
-        [Required(ErrorMessage = "Total amount is required.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Total amount must be greater than 0.")]
         public decimal TotalAmount { get; set; } // Toplam tutar
+        public OrderStatus OrderStatus { get; set; }
 
-        [Required(ErrorMessage = "Customer ID is required.")]
+
+
         public int CustomerId { get; set; } // Siparişi veren müşteri
 
         // Navigation Properties
-        public User? User { get; set; }// Siparişi veren müşteri
-        public ICollection<OrderProduct>? OrderProducts { get; set; } // Siparişin ürünleri
+
+        public User User { get; set; } = new User(); // Siparişi veren müşteri
+
+        public ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>(); // Siparişin ürünleri
     }
 
     public class OrderConfiguration : BaseConfigiration<Order>

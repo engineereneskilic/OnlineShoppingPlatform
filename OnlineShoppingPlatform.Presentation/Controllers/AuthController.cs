@@ -41,6 +41,8 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 return BadRequest(ModelState);
             }
 
+     
+
             var result = _userService.LoginUser(
                     new LoginUserDto{ Email = loginRequest.Email, Password = loginRequest.Password }
                 );
@@ -108,6 +110,12 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return BadRequest(ModelState);
             }  // TODO: İleride action filter olarak kodlanacak
+
+            // Senaryo : Eğer daha önceden veritabanına kayıtlı biri yoksa rolü admin ata ondan sonra gelenler hep Customer olsun
+            //var resultFirstOne = await _use
+
+
+            
             var addUserDto = new AddUserDto
             {
                 Email = registerRequest.Email,
@@ -122,7 +130,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
             if (result.IsSucceed)
             {
-                return Ok();
+                return Ok(result.Message);
             }
             else
             {

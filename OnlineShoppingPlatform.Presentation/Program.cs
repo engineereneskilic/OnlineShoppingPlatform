@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OnlineShoppingPlatform.Business.DataProtection;
-using OnlineShoppingPlatform.Business.Operations.Feature;
 using OnlineShoppingPlatform.Business.Operations.Order;
+using OnlineShoppingPlatform.Business.Operations.Product;
 using OnlineShoppingPlatform.Business.Operations.User;
 using OnlineShoppingPlatform.DataAccess;
 using OnlineShoppingPlatform.DataAccess.Entities;
@@ -72,8 +72,8 @@ builder.Services.AddControllers();
 
 // Register Services for Dependency Injection
 builder.Services.AddScoped<IUserService, UserManager>();
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IProductService, ProductManager>();
+builder.Services.AddScoped<IOrderService, OrderManager>();
 
 
 
@@ -155,7 +155,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-builder.Services.AddScoped<IFeatureService,FeatureManager>(); // her http isteði için yeni bir nesne yaratmak istiyorum
 
 var app = builder.Build();
 

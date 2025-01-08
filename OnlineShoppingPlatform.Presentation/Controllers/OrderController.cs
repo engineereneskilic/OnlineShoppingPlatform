@@ -3,78 +3,146 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OnlineShoppingPlatform.DataAccess.Entities;
 using OnlineShoppingPlatform.DataAccess;
+using Microsoft.AspNetCore.Authorization;
+using OnlineShoppingPlatform.Presentation.Models.Order;
+using System.Security.Claims;
+using OnlineShoppingPlatform.Business.Operations.Product;
+using System.Runtime.CompilerServices;
+using OnlineShoppingPlatform.Business.Types;
+using OnlineShoppingPlatform.Business.Operations.Order;
+using OnlineShoppingPlatform.Business.Operations.Order.Dtos;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class OrderController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IOrderService _orderService;
+        private readonly IProductService _productService;
 
-        public OrderController(AppDbContext context)
+
+        public OrderController(IOrderService orderService, IProductService productService)
         {
-            _context = context;
+            _orderService = orderService;
+            _productService = productService;
         }
+
 
         // Sipariş oluşturma
-        [HttpPost]
-        public async Task<IActionResult> CreateOrder(Order order)
+        [Authorize]
+        [HttpPost("addorder")]
+        public async Task<IActionResult> AddOrder([FromBody] AddOrderRequest orderRequest)
         {
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetOrderById), new { id = order.OrderId }, order);
-        }
-
-        // Siparişi Id ile getirme
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrderById(int id)
-        {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
+            // Kontrol 1: Gönderilen istek null mı?
+            if (orderRequest == null || orderRequest.OrderProducts == null || !orderRequest.OrderProducts.Any())
             {
-                return NotFound();
+                return BadRequest("Sipariş veya ürün bilgileri eksik.");
             }
 
-            return order;
+            // DTO oluştur
+            var orderDto = new AddOrderDto
+            {
+                CustomerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!),
+                TotalAmount = orderRequest.TotalAmount,
+                OrderStatus = orderRequest.OrderStatus
+            };
+
+            var orderProducts = orderRequest.OrderProducts.Select(op =>
+            {
+                var product = _productService.GetProductByIdAsync(op.ProductId);
+          
+                return new OrderProduct
+                {
+                    ProductId = op.ProductId,
+                    Quantity = op.Quantity,
+                    UnitPrice = (product.Result?.Price ?? 0) // Fiyat yoksa 0 olarak al
+                };
+            }).ToList();
+
+            // Servis katmanına çağrı
+            var result = await _orderService.AddOrderAsync(orderDto, orderProducts);
+
+            // İşlem sonucu
+            if (result.IsSucceed)
+            {
+                return Ok(result.Message);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
+        }
+
+
+        // Siparişi Id ile getirme
+        [Authorize]
+        [HttpGet("{orderId}")]
+        public async Task<IActionResult> GetOrderById(int orderId)
+        {
+            var result = await _orderService.GetOrderByIdAsync(orderId);
+
+            if (result == null)
+            {
+                // Sipariş bulunamadı
+                return NotFound("The order with the specified ID does not exist.");
+            }
+
+            return Ok(result);
         }
 
         // Siparişleri listeleme
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetAllOrders()
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllOrders()
         {
-            return await _context.Orders.ToListAsync();
+            var orders = await _orderService.GetAllOrdersAsync();
+
+            if (orders == null || !orders.Any())
+            {
+                return NotFound("No orders found.");
+            }
+
+            return Ok(orders);
         }
 
         // Sipariş güncelleme
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOrder(int id, Order order)
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{orderId}")]
+        public async Task<IActionResult> UpdateOrder(int orderId, Order updatedOrder, List<OrderProduct> updatedOrderProducts)
         {
-            if (id != order.OrderId)
+            // UpdateOrderAsync metodunu çağırıyoruz
+
+            var result = await _orderService.UpdateOrderAsync(orderId, updatedOrder, updatedOrderProducts);
+
+            // Eğer güncelleme başarılıysa
+            if (result.IsSucceed)
             {
-                return BadRequest();
+                return Ok(result.Message);  // Başarı mesajı döndürüyoruz
             }
-
-            _context.Entry(order).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            else
+            {
+                return BadRequest(result.Message);  // Hata mesajını döndürüyoruz
+            }
         }
 
         // Sipariş silme
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(int id)
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{orderId}")]
+        public async Task<IActionResult> DeleteOrder(int orderId)
         {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
+            // DeleteOrderAsync metodunu çağırıyoruz
+            var result = await _orderService.DeleteOrderAsync(orderId);
+
+            // Eğer silme başarılıysa
+            if (result.IsSucceed)
             {
-                return NotFound();
+                return Ok(result.Message);  // Başarı mesajı döndürüyoruz
             }
-
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            else
+            {
+                return BadRequest(result.Message);  // Hata mesajını döndürüyoruz
+            }
         }
     }
 }

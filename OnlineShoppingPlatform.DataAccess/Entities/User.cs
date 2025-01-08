@@ -16,7 +16,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
     {
         
         [Key]
-        public int Id { get; set; } // Primary Key 
+        public int UserId { get; set; } // Primary Key 
 
         [Required(ErrorMessage = "User name is required.")]
         [StringLength(50, ErrorMessage = "First name cannot exceed 50 characters.")]
@@ -49,16 +49,16 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
         public DateTime BirthDate { get; set; }
 
         [Required(ErrorMessage = "Usertype is required.")]
-        public string UserType { get; set; } = string.Empty;
+        public UserRole UserType { get; set; }
 
         [Required]
-        public UserRole Role { get; set; } // Kullanıcı rolü
+        public string Role { get; set; } = string.Empty; // Kullanıcı rolü
 
         // Navigation Property
         public ICollection<Order>? Orders { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
+        //public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        //public DateTime? UpdatedAt { get; set; }
 
     }
 

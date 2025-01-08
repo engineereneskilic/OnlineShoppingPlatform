@@ -25,6 +25,11 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
         public int Quantity { get; set; } // Ürün adedi
 
+        [Required(ErrorMessage = "Unit price is required.")]
+        [Range(0, double.MaxValue, ErrorMessage = "Unit price must be a positive value.")]
+        [DataType(DataType.Currency, ErrorMessage = "Invalid currency format.")]
+        public decimal UnitPrice { get; set; } // Ürün adedi
+
         // Navigation Properties
         public Order? Order { get; set; } // Sipariş
         public Product? Product { get; set; } // Ürün

@@ -1,5 +1,6 @@
 ﻿using OnlineShoppingPlatform.DataAccess.UnitOfWork;
 using OnlineShoppingPlatform.DataAccess.Entities;
+using OnlineShoppingPlatform.DataAccess.Entities.Enums;
 using OnlineShoppingPlatform.Business;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using OnlineShoppingPlatform.Business.Types;
 using OnlineShoppingPlatform.Business.Operations.User.Dtos;
 using OnlineShoppingPlatform.DataAccess.Repositories;
 using OnlineShoppingPlatform.Business.DataProtection;
+using Microsoft.EntityFrameworkCore;
 
 namespace OnlineShoppingPlatform.Business.Operations.User
 {
@@ -30,6 +32,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User
 
         public async Task<ServiceMessage> CreateUserAsync(AddUserDto user)
         {
+             // gelen kullanıcı email adresi ile daha önceden kayıt olup olmadığı kontrol ediliyor
             if (user.Email != null)
             {
                 // Email kontrolü
@@ -43,6 +46,10 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                         Message = "Email adresi zaten mevcut"
                     };
                 }
+                // Eğer kayıtlıysa sisteme ilk gelen kullanıcı mı olup olmadığı bulunuyor. Eğer öyleyse rolü Admin olarak atanıyor eğer deilse sonradan gelenler Customer olacak şekilde atanıyor.
+
+                bool isFirstUser = await _userepository.isFirstAsync();
+
 
                 var newuser = new DataAccess.Entities.User()
                 {
@@ -53,7 +60,8 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                     PhoneNumber = user.PhoneNumber,
                     Password = _dataProtector.Protect(user.Password), // Şifreleme olcak
                     BirthDate = user.BirthDate,
-                    UserType = user.UserType
+                    Role = isFirstUser ? "Admin" : "Customer",
+                    UserType = isFirstUser ? UserRole.Admin : UserRole.Customer,
                 };
 
                 await _userepository.AddAsync(newuser);
@@ -85,6 +93,8 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                 };
             }
         }
+
+
 
         public ServiceMessage<UserInfoDto> LoginUser(LoginUserDto loginUserDto)
         {

@@ -14,6 +14,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User
 
         ServiceMessage<UserInfoDto> LoginUser(LoginUserDto loginUserDto);
 
+
         //Task<List<User>> GetAllUsersAsync();
         //Task<User> GetUserByIdAsync(int id);
        

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase

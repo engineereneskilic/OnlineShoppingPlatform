@@ -20,15 +20,15 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
             _dbSet = context.Set<T>();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public async Task<IQueryable<T>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            return await Task.FromResult(_dbSet.AsQueryable());
         }
 
 
-        public async Task<IEnumerable<T>> GetByQueryAsync(Expression<Func<T, bool>> filter)
+        public async Task<IQueryable<T>> GetByQueryAsync(Expression<Func<T, bool>> filter)
         {
-            return await _dbSet.Where(filter).ToListAsync();
+            return await Task.FromResult(_dbSet.Where(filter));  // IQueryable'ı döndürür, ancak asenkron çalıştırır.
         }
 
         public async Task<T> GetByIdAsync(int id)
@@ -46,12 +46,12 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
             return entity;
         }
 
-        public async Task<T> Get(Expression<Func<T, bool>> predicate)
+        public async Task<T> GetAsync(Expression<Func<T, bool>> predicate)
         {
-            // Try to find the entity by its ID
-            var entity =  _dbSet.FirstOrDefault(predicate);
+            // Asenkron olarak veritabanından entity'yi bul
+            var entity = await _dbSet.FirstOrDefaultAsync(predicate);
 
-            // If no entity is found, throw an exception or handle the null case
+            // Eğer entity bulunamazsa, özel bir durum fırlat
             if (entity == null)
             {
                 throw new InvalidOperationException($"Entity not found.");
@@ -94,6 +94,13 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
 
             _dbSet.Remove(entity);
             await _context.SaveChangesAsync();
+        }
+        public async Task<bool> isFirstAsync()
+        {
+            // Veritabanında hiç kayıt olup olmadığını kontrol et
+            var count = await _dbSet.CountAsync(); // Asenkron olarak saymayı bekle
+
+            return count == 0; // Eğer sayılar sıfırsa, bu ilk kayıt demektir
         }
     }
 }

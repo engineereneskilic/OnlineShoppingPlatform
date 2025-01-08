@@ -1,4 +1,5 @@
-﻿using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
+﻿using Microsoft.AspNetCore.Authorization;
+using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
 using OnlineShoppingPlatform.Business.Types;
 using OnlineShoppingPlatform.DataAccess.Repositories;
 using OnlineShoppingPlatform.DataAccess.UnitOfWork;
@@ -27,17 +28,44 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
 
         public async Task<ProductEntity> GetProductByIdAsync(int id)
         {
-            return await _unitOfWork.Repository<ProductEntity>().GetByIdAsync(id);
+
+            // id geçerli bir değer olup olmadığını kontrol et
+            if (id <= 0)
+            {
+                throw new ArgumentException("Geçersiz ürün ID'si", nameof(id));
+            }
+
+            // Veritabanında ürünü arayın
+            var product = await _repository.GetByIdAsync(id);
+
+            // Eğer ürün bulunmazsa, null kontrolü yapın
+            if (product == null)
+            {
+                throw new KeyNotFoundException($"ID: {id} ile ürün bulunamadı.");
+            }
+
+            return product;
+
+            //return await _unitOfWork.Repository<ProductEntity>().GetByIdAsync(id);
         }
 
 
         public async Task<List<ProductEntity>> GetAllProductsAsync()
         {
-            return (await _unitOfWork.Repository<ProductEntity>().GetAllAsync()).ToList();
+            // Tüm ürünleri veritabanından getir
+            var products = (await _repository.GetAllAsync());
+
+            // Eğer hiçbir ürün bulunamazsa, boş bir liste döndür
+            if (products == null || !products.Any())
+            {
+                throw new KeyNotFoundException("Veritabanında hiçbir ürün bulunamadı.");
+            }
+
+            return products.ToList();
         }
 
 
-
+        
         public async Task<ServiceMessage> AddProductAsync(AddProductDto addProductDto)
         {
 
@@ -79,19 +107,86 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
             };
         }
 
-        public async Task<ProductEntity> UpdateProductAsync(ProductEntity product)
+        public async Task<ServiceMessage> UpdateProductAsync(UpdateProductDto updateProductDto)
         {
-            await _unitOfWork.Repository<ProductEntity>().UpdateAsync(product);
-            await _unitOfWork.DbSaveChangesAsync();
-            return product;
+            // Güncellenecek ürün veritabanında var mı kontrol et
+            var existingProduct = await _repository.GetByIdAsync(updateProductDto.ProductId);
+            if (existingProduct == null)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Güncellemek istediğiniz ürün bulunamadı."
+                };
+            }
+
+            // Aynı isimde başka bir ürün var mı kontrol et (aynı ID'ye sahip olmayan)
+            var hasDuplicateProduct = await _repository.GetByQueryAsync(x =>
+                x.ProductName.Equals(updateProductDto.ProductName, StringComparison.OrdinalIgnoreCase) &&
+                x.ProductId != updateProductDto.ProductId);
+
+            if (hasDuplicateProduct.Any())
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Bu isimde bir ürün zaten var, güncelleme yapılamaz."
+                };
+            }
+
+            // Ürün bilgilerini güncelle
+            existingProduct.ProductName = updateProductDto.ProductName;
+            existingProduct.StockQuantity = updateProductDto.StockQuantity;
+            existingProduct.Price = updateProductDto.Price;
+
+            try
+            {
+                await _repository.UpdateAsync(existingProduct);
+                await _unitOfWork.DbSaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                throw new Exception("Ürün güncelleme sırasında bir hata oluştu");
+            }
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Ürün başarıyla güncellendi"
+            };
         }
 
-        public async Task DeleteProductAsync(int id)
+        public async Task<ServiceMessage> DeleteProductAsync(int id)
         {
-            await _unitOfWork.Repository<ProductEntity>().DeleteAsync(id);
-            await _unitOfWork.DbSaveChangesAsync();
+            // Silinecek ürün veritabanında var mı kontrol et
+            var existingProduct = await _repository.GetByIdAsync(id);
+            if (existingProduct == null)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Silmek istediğiniz ürün bulunamadı."
+                };
+            }
+
+            try
+            {
+                // Ürünü sil
+                await _repository.DeleteAsync(existingProduct);
+                await _unitOfWork.DbSaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                throw new Exception("Ürün silme sırasında bir hata oluştu.");
+            }
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Ürün başarıyla silindi."
+            };
         }
 
-    
+      
     }
 }

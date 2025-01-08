@@ -42,4 +42,8 @@
     <None Include="C:\Users\Enes KILIÇ\source\repos\patikabackendbootcamp\OnlineShoppingPlatform\OnlineShoppingPlatform.Presentation\Controllers\.editorconfig" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\Order\AutoRequests\" />
+  </ItemGroup>
+
 </Project>

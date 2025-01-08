@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OnlineShoppingPlatform.DataAccess.Entities.Enums;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace OnlineShoppingPlatform.Business.Operations.Product.Dtos
+namespace OnlineShoppingPlatform.Presentation.Models.Product
 {
-    public class AddProductDto
+    public class UpdateProductRequest
     {
+        [Required]
+        public int ProductId { get; set; } // Primary Key
+
         [Required(ErrorMessage = "Product name is required.")]
         [StringLength(100, ErrorMessage = "Product name cannot exceed 100 characters.")]
         public string ProductName { get; set; } = string.Empty;  // Ürün adı

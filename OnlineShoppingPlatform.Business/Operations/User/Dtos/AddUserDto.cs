@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OnlineShoppingPlatform.DataAccess.Entities.Enums;
 
 namespace OnlineShoppingPlatform.Business.Operations.User.Dtos
 {
@@ -34,8 +35,12 @@ namespace OnlineShoppingPlatform.Business.Operations.User.Dtos
         [Phone(ErrorMessage = "Invalid phone number format.")]
         public string? PhoneNumber { get; set; } = string.Empty; // Telefon numarası
 
-        [Required(ErrorMessage = "Usertype is required.")]
-        public string UserType { get; set; } = string.Empty; 
+        // bunlar otomatik yapılacak kullanıcıdan almicaz
+        //[Required(ErrorMessage = "Usertype is required.")]
+        //public string UserType { get; set; } = string.Empty;
+
+        //[Required]
+        //public UserRole Role { get; set; } // Kullanıcı rolü
 
         [Required(ErrorMessage = "BirthDate is required.")]
         [Range(typeof(DateTime), "1/1/1900", "12/31/2025", ErrorMessage = "BirthDate must be between 01/01/1900 and 12/31/2025.")]
