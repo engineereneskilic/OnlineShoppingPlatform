@@ -33,7 +33,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User.Dtos
 
         [Required(ErrorMessage = "Phone number is required.")]
         [Phone(ErrorMessage = "Invalid phone number format.")]
-        public string? PhoneNumber { get; set; } = string.Empty; // Telefon numarası
+        public string PhoneNumber { get; set; } = string.Empty; // Telefon numarası
 
         // bunlar otomatik yapılacak kullanıcıdan almicaz
         //[Required(ErrorMessage = "Usertype is required.")]

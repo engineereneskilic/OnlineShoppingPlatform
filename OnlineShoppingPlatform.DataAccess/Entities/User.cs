@@ -51,9 +51,6 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
         [Required(ErrorMessage = "Usertype is required.")]
         public UserRole UserType { get; set; }
 
-        [Required]
-        public string Role { get; set; } = string.Empty; // Kullanıcı rolü
-
         // Navigation Property
         public ICollection<Order>? Orders { get; set; }
 

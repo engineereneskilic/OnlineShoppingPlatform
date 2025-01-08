@@ -11,7 +11,7 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
     {
         Task<IQueryable<T>> GetAllAsync();
 
-        Task<T> Get(Expression<Func<T, bool>> predicate);
+        Task<T> GetAsync(Expression<Func<T, bool>> predicate);
 
         Task<IQueryable<T>> GetByQueryAsync(Expression<Func<T, bool>> filter);
 

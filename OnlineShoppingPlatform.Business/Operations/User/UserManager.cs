@@ -60,7 +60,6 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                     PhoneNumber = user.PhoneNumber,
                     Password = _dataProtector.Protect(user.Password), // Şifreleme olcak
                     BirthDate = user.BirthDate,
-                    Role = isFirstUser ? "Admin" : "Customer",
                     UserType = isFirstUser ? UserRole.Admin : UserRole.Customer,
                 };
 
@@ -96,20 +95,22 @@ namespace OnlineShoppingPlatform.Business.Operations.User
 
 
 
-        public ServiceMessage<UserInfoDto> LoginUser(LoginUserDto loginUserDto)
+        public async Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto loginUserDto)
         {
-             var user = _userepository.Get(x => x.Email.ToLower() == loginUserDto.Email.ToLower());
+             var user = await _userepository.GetAsync(x => x.Email.ToLower() == loginUserDto.Email.ToLower());
+
+   
 
             if(user is null )
             {
                 return new ServiceMessage<UserInfoDto>
                 {
                     IsSucceed = false,
-                    Message = "sdfsdfsddsfsdsdfsdf"
+                    Message = "Kullanıcı bulunamadı"
                 };
             }
 
-            var unprotectedPassword = _dataProtector.UnProtect(user.Result.Password);
+            var unprotectedPassword = _dataProtector.UnProtect(user.Password);
             if(unprotectedPassword == loginUserDto.Password)
             {
                 return new ServiceMessage<UserInfoDto>
@@ -117,10 +118,10 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                     IsSucceed = true,
                     Data = new UserInfoDto
                     {
-                        Email = user.Result.Email,
-                        FirstName = user.Result.FirstName,
-                        LastName = user.Result.LastName,
-                        UserType = user.Result.UserType
+                        Email = user.Email,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        UserType = user.UserType
                     }
                 };
             } else
@@ -128,7 +129,8 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                 return new ServiceMessage<UserInfoDto>
                 {
                     IsSucceed = false,
-                    Message = unprotectedPassword + " -- "+ user.Result.Password
+                    //Message = unprotectedPassword + " -- "+ user.Password
+                    Message = "Kullanıcı adı veya şifre yanlış"
                 };
             }
         }

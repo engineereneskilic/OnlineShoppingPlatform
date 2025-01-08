@@ -12,14 +12,15 @@ namespace OnlineShoppingPlatform.Business.Operations.User
     {
         Task<ServiceMessage> CreateUserAsync(AddUserDto user); // async çünkü unit of work kullanılacak
 
-        ServiceMessage<UserInfoDto> LoginUser(LoginUserDto loginUserDto);
+        Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto loginUserDto);
+
 
 
         //Task<List<User>> GetAllUsersAsync();
         //Task<User> GetUserByIdAsync(int id);
-       
+
         //Task<User> UpdateUserAsync(User user);
-        
+
         //Task DeleteUserAsync(int id);
     }
 }

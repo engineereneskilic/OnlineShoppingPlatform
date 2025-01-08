@@ -34,22 +34,26 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest loginRequest)
+        public async Task<IActionResult> LoginAsync([FromBody] LoginRequest loginRequest)
         {
             if(!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-     
 
-            var result = _userService.LoginUser(
-                    new LoginUserDto{ Email = loginRequest.Email, Password = loginRequest.Password }
-                );
 
+            // Login işlemi
+            var result = await _userService.LoginUserAsync(
+                new LoginUserDto { Email = loginRequest.Email, Password = loginRequest.Password }
+            );
+
+          
+
+            // Giriş başarısızsa
             if (!result.IsSucceed)
             {
-                return Ok(new ServiceMessage()
+                return Ok(new ServiceMessage
                 {
                     IsSucceed = result.IsSucceed,
                     Message = result.Message

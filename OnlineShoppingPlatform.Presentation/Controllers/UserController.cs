@@ -28,7 +28,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         {
             _context.Users.Add(user);  // _userManager yerine _context'i kullanarak veri ekliyoruz
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
+            return CreatedAtAction(nameof(GetUserById), new { id = user.UserId }, user);
         }
 
         // Kullanıcıyı Id ile Getirme
@@ -55,7 +55,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, User user)
         {
-            if (id != user.Id)
+            if (id != user.UserId)
             {
                 return BadRequest();
             }
