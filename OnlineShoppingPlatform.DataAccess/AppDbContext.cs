@@ -48,11 +48,22 @@ namespace OnlineShoppingPlatform.DataAccess
 
             modelBuilder.ApplyConfiguration(new RequestLogConfiguration());
 
-          
+
             base.OnModelCreating(modelBuilder);
 
             // ÖZEL DÜZELTMELER
+            ConfigurePrecisionSettings(modelBuilder);
 
+            // İLİŞKİLER
+            ConfigureRelationships(modelBuilder);
+
+            // EK İNDİSLER
+            ConfigureIndexes(modelBuilder);
+
+        }
+
+        private void ConfigurePrecisionSettings(ModelBuilder modelBuilder)
+        {
             // Order tablosu için TotalAmount hassasiyeti
             modelBuilder.Entity<Order>()
                 .Property(o => o.TotalAmount)
@@ -63,48 +74,63 @@ namespace OnlineShoppingPlatform.DataAccess
                 .Property(p => p.Price)
                 .HasPrecision(18, 2); // 18 basamak, virgülden sonra 2 basamak
 
-            // İLİŞKİLER
+            // OrderProduct tablosu için UnitPrice hassasiyeti
+            modelBuilder.Entity<OrderProduct>()
+                .Property(op => op.UnitPrice)
+                .HasPrecision(18, 2); // 18 basamak, virgülden sonra 2 basamak
+        }
 
+        private void ConfigureRelationships(ModelBuilder modelBuilder)
+        {
+            // -- OrderProduct --
+            /**************************************************/
             // Many-to-Many ilişki konfigürasyonu
             modelBuilder.Entity<OrderProduct>()
                 .HasKey(op => new { op.OrderId, op.ProductId });
 
-            // Order ile ilişkiyi belirt
-
+            // Order ile ilişki
             modelBuilder.Entity<OrderProduct>()
-               .HasOne(op => op.Order) // Define the relationship to Order
-               .WithMany(o => o.OrderProducts) // Define the reverse relationship
-               .HasForeignKey(op => op.OrderId) // Specify the correct foreign key
-               .OnDelete(DeleteBehavior.Cascade);
-
-            // Product ile ilişkiyi belirt
-
-            modelBuilder.Entity<OrderProduct>()
-                .HasOne(op => op.Product) // Define the relationship to Product
-                .WithMany(p => p.OrderProducts) // Define the reverse relationship
-                .HasForeignKey(op => op.ProductId) // Specify the correct foreign key
+                .HasOne(op => op.Order)
+                .WithMany(o => o.OrderProducts)
+                .HasForeignKey(op => op.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<OrderProduct>(entity =>
-            {
-                entity.Property(e => e.UnitPrice)
-                      .HasPrecision(18, 2); // Precision: 18 toplam basamak, Scale: 2 ondalık basamak
-            });
+            // Product ile ilişki
+            modelBuilder.Entity<OrderProduct>()
+                .HasOne(op => op.Product)
+                .WithMany(p => p.OrderProducts)
+                .HasForeignKey(op => op.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // -- Order --
+            /*************************************************/
+            // User ile ilişkisi
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User) // Order, bir User'a ait
+                .WithMany(u => u.Orders) // User, birçok Order'a sahip olabilir
+                .HasForeignKey(o => o.CustomerId) // Order tablosunda UserId yabancı anahtarı
+                .OnDelete(DeleteBehavior.Cascade); // Kullanıcı silindiğinde, ona ait siparişler de silinir
 
 
-            // Benzersiz Email için Index
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .IsUnique();
+            // -- Log --
+            /*************************************************/
+            // User ile ilişkisi
+            modelBuilder.Entity<RequestLog>()
+               .HasOne(al => al.User) // AuditLog tablosundaki her kayıt bir User'a ait olacak şekilde ilişkiyi tanımlıyoruz
+               .WithMany(u => u.RequestLogs) // Bir User birden fazla AuditLog'a sahip olabilir, yani kullanıcı birden fazla işlem kaydına sahip olabilir
+               .HasForeignKey(al => al.UserId) // AuditLog tablosundaki UserId alanı, User tablosundaki birincil anahtara (Id) yabancı anahtar olarak bağlanır
+               .OnDelete(DeleteBehavior.Restrict); // Kullanıcı silindiğinde, o kullanıcıya ait işlem loglarının silinmesini engelliyoruz. Yani kullanıcı silinse de loglar korunur.
 
 
         }
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-        //    if (!optionsBuilder.IsConfigured)
-        //    {
-        //        optionsBuilder.UseSqlServer("Server=.;Database=OnlineShoppingPlatform;Trusted_Connection=True;MultipleActiveResultSets=true");
-        //    }
-        //}
+
+        private void ConfigureIndexes(ModelBuilder modelBuilder)
+        {
+            // User tablosunda benzersiz Email için Index
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+        }
+
     }
 }

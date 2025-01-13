@@ -33,10 +33,8 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return Ok(result);
             }
-            else
-            {
-                return BadRequest(result.Message);
-            }
+
+            return BadRequest(result.Message);
 
         }
 
@@ -59,6 +57,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
 
         [HttpPost]
+        [HttpPost("addmaintenance")]
         public async Task<IActionResult> AddMaintenanceMode([FromBody] AddMaintenanceRequest addMaintenanceRequest)
         {
             if (!ModelState.IsValid)
@@ -89,6 +88,10 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMaintenanceMode(int id, [FromBody] UpdateMaintenanceRequest updateMaintenanceRequest)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
             var updateMaintenanceDto = new UpdateMaintenanceDto
             {
@@ -126,10 +129,9 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return Ok(result.Message);
             }
-            else
-            {
-                return BadRequest(result.Message);
-            }
+ 
+            return BadRequest(result.Message);
+     
 
         }
 
@@ -147,10 +149,9 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return Ok(result.Message);
             }
-            else
-            {
-                return BadRequest(result.Message);
-            }
+
+            return BadRequest(result);
+
 
         }
 

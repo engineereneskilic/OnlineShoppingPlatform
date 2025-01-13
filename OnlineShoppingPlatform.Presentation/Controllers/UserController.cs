@@ -9,6 +9,8 @@ using System.Runtime.CompilerServices;
 using OnlineShoppingPlatform.Business.Operations.User;
 using OnlineShoppingPlatform.Business.Operations.User.Dtos;
 using OnlineShoppingPlatform.Business.Types;
+using OnlineShoppingPlatform.Presentation.Models.User;
+using OnlineShoppingPlatform.Business.DataProtection;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
@@ -18,33 +20,22 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        public UserController(IUserService userService)
+        private readonly IDataProtection _dataProtector;
+        public UserController(IUserService userService , IDataProtection dataProtector)
         {
             _userService = userService;
+            _dataProtector = dataProtector;
         }
 
-
         [HttpGet("all")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllUsers()
         {
-            try
-            {
-                var users = await _userService.GetAllUsersAsync();
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new ServiceMessage
-                {
-                    IsSucceed = false,
-                    Message = $"Kullanıcılar alınırken bir hata oluştu: {ex.Message}"
-                });
-            }
+            var users = await _userService.GetAllUsersAsync();
+
+            return Ok(users);
         }
 
         [HttpGet("{id}")]
-        [Authorize]
         public async Task<IActionResult> GetUserById(int id)
         {
             if (id <= 0)
@@ -56,45 +47,35 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 });
             }
 
-            try
-            {
-                var user = await _userService.GetUserByIdAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
 
-                if (user == null)
-                {
-                    return NotFound(new ServiceMessage
-                    {
-                        IsSucceed = false,
-                        Message = "Kullanıcı bulunamadı."
-                    });
-                }
-
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new ServiceMessage
-                {
-                    IsSucceed = false,
-                    Message = $"Kullanıcı bilgileri alınırken bir hata oluştu: {ex.Message}"
-                });
-            }
+            return Ok(user);
 
 
         }
 
         [HttpPut("update")]
-        [Authorize]
-        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto updateUserDto)
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
         {
+
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ServiceMessage
-                {
-                    IsSucceed = false,
-                    Message = "Geçersiz veri girişi."
-                });
+                return BadRequest(ModelState);
             }
+
+            var updateUserDto = new UpdateUserDto
+            {
+                UserId = updateUserRequest.UserId,
+                UserName = updateUserRequest.UserName,
+                FirstName = updateUserRequest.FirstName,
+                LastName = updateUserRequest.LastName,
+                Email = updateUserRequest.Email,
+                Password = _dataProtector.UnProtect(updateUserRequest.Password),
+                BirthDate = updateUserRequest.BirthDate,
+                PhoneNumber = updateUserRequest.PhoneNumber
+            };
+
+           
 
             var result = await _userService.UpdateUserAsync(updateUserDto);
 
@@ -107,7 +88,6 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             if (id <= 0)

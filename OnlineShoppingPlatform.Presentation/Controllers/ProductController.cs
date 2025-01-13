@@ -28,6 +28,11 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpPost]
         public async Task<IActionResult> AddProduct(AddProductRequest productRequest)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var addProductDto = new AddProductDto
             {
                 ProductName = productRequest.ProductName,
@@ -41,15 +46,14 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             if(result.IsSucceed)
             {
                 return Ok(result.Message);
-            } else
-            {
-                return BadRequest(result.Message);
-            }
+            } 
+           
+           return BadRequest(result.Message);
 
         }
 
         // Ürün Id ile getirme
-
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProductById(int id)
         {
@@ -64,6 +68,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Ürünleri listeleme
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
         {
@@ -75,6 +80,11 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, UpdateProductRequest productRequest)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var updateProductDto = new UpdateProductDto
             {
                 ProductId = id,
@@ -110,10 +120,9 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return Ok(result.Message);
             }
-            else
-            {
-                return BadRequest(result.Message);
-            }
+ 
+            return BadRequest(result.Message);
+     
         }
 
         // Ürün silme
@@ -142,12 +151,8 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return Ok(result.Message);
             }
-            else
-            {
-                return BadRequest(result.Message);
-            }
 
-
+            return BadRequest(result.Message);        
         }
     }
 }

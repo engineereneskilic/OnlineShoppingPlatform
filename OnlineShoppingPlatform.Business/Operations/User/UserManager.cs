@@ -14,6 +14,7 @@ using OnlineShoppingPlatform.Business.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using UserEntity = OnlineShoppingPlatform.DataAccess.Entities.User;
 using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace OnlineShoppingPlatform.Business.Operations.User
@@ -33,11 +34,9 @@ namespace OnlineShoppingPlatform.Business.Operations.User
             _dataProtector = dataProtector;
         }
 
-   
+
         public async Task<ServiceMessage> AddUserAsync(AddUserDto user)
         {
-
-
             if (user == null)
             {
                 return new ServiceMessage
@@ -71,43 +70,41 @@ namespace OnlineShoppingPlatform.Business.Operations.User
             bool isFirstUser = await _userepository.isFirstAsync();
 
 
-                var newuser = new UserEntity()
-                {
-                    UserName = user.UserName,
-                    Email = user.Email,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    PhoneNumber = user.PhoneNumber,
-                    Password = _dataProtector.Protect(user.Password), // Şifreleme olcak
-                    BirthDate = user.BirthDate,
-                    UserType = isFirstUser ? UserRole.Admin : UserRole.Customer,
-                };
+            var newuser = new UserEntity()
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber,
+                Password = _dataProtector.Protect(user.Password), // Şifreleme olcak
+                BirthDate = user.BirthDate,
+                UserType = isFirstUser ? UserRole.Admin : UserRole.Customer,
+            };
 
+            try
+            {
                 await _userepository.AddAsync(newuser);
+                await _unitOfWork.DbSaveChangesAsync();
+
+            }
+            catch (Exception)
+            {
+
+                throw new Exception("Kullanıcı kaydı sırasında bir hata oluştu");
+            }
+
+            return new ServiceMessage
+            {
+                IsSucceed = true,
+                Message = "Kullanıcı başarıyla eklendi"
+            };
 
 
-                try
-                {
-                    await _unitOfWork.DbSaveChangesAsync();
 
-                }
-                catch (Exception)
-                {
-
-                    throw new Exception("Kullanıcı kaydı sırasında bir hata oluştu");
-                }
-
-                return new ServiceMessage
-                {
-                    IsSucceed = true,
-                    Message = "Kullanıcı başarıyla eklendi"
-                };
-
-            
-           
         }
 
-      
+
 
 
         public async Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto loginUserDto)
@@ -124,7 +121,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User
 
             var user = await _userepository.GetAsync(x => x.Email.ToLower() == loginUserDto.Email.ToLower());
 
-            if(user is null )
+            if (user is null)
             {
                 return new ServiceMessage<UserInfoDto>
                 {
@@ -134,7 +131,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User
             }
 
             var unprotectedPassword = _dataProtector.UnProtect(user.Password);
-            if(unprotectedPassword == loginUserDto.Password)
+            if (unprotectedPassword == loginUserDto.Password)
             {
                 return new ServiceMessage<UserInfoDto>
                 {
@@ -147,7 +144,8 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                         UserType = user.UserType
                     }
                 };
-            } else
+            }
+            else
             {
                 return new ServiceMessage<UserInfoDto>
                 {
@@ -208,9 +206,13 @@ namespace OnlineShoppingPlatform.Business.Operations.User
             }
 
             // Kullanıcı bilgilerini güncelle
+            user.UserName = updateUserDto.UserName ?? user.UserName;
             user.FirstName = updateUserDto.FirstName ?? user.FirstName;
             user.LastName = updateUserDto.LastName ?? user.LastName;
             user.Email = updateUserDto.Email ?? user.Email;
+            user.Password = _dataProtector.Protect(updateUserDto.Password) ?? _dataProtector.Protect(user.Password);
+            user.BirthDate = updateUserDto?.BirthDate ?? user.BirthDate;
+            user.PhoneNumber = updateUserDto?.PhoneNumber ?? user.PhoneNumber;
 
             try
             {
@@ -275,7 +277,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User
             }
         }
 
-     
+
 
         /***********************************************************************/
 

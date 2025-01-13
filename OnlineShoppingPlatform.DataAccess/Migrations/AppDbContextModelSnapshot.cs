@@ -52,12 +52,9 @@ namespace OnlineShoppingPlatform.DataAccess.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("OrderId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CustomerId");
 
                     b.ToTable("Orders");
                 });
@@ -216,18 +213,23 @@ namespace OnlineShoppingPlatform.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("RequestLogs");
                 });
 
             modelBuilder.Entity("OnlineShoppingPlatform.DataAccess.Maintenance.MaintenanceMode", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("MaintenanceId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaintenanceId"));
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
@@ -241,7 +243,7 @@ namespace OnlineShoppingPlatform.DataAccess.Migrations
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                    b.HasKey("MaintenanceId");
 
                     b.ToTable("MaintenanceModes");
                 });
@@ -250,7 +252,7 @@ namespace OnlineShoppingPlatform.DataAccess.Migrations
                 {
                     b.HasOne("OnlineShoppingPlatform.DataAccess.Entities.User", "User")
                         .WithMany("Orders")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -276,6 +278,17 @@ namespace OnlineShoppingPlatform.DataAccess.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("OnlineShoppingPlatform.DataAccess.Logging.RequestLog", b =>
+                {
+                    b.HasOne("OnlineShoppingPlatform.DataAccess.Entities.User", "User")
+                        .WithMany("RequestLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OnlineShoppingPlatform.DataAccess.Entities.Order", b =>
                 {
                     b.Navigation("OrderProducts");
@@ -289,6 +302,8 @@ namespace OnlineShoppingPlatform.DataAccess.Migrations
             modelBuilder.Entity("OnlineShoppingPlatform.DataAccess.Entities.User", b =>
                 {
                     b.Navigation("Orders");
+
+                    b.Navigation("RequestLogs");
                 });
 #pragma warning restore 612, 618
         }

@@ -83,7 +83,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
             var token = JwtHelper.GenerateJwtToken(new JwtDto
             {
-                Id = user.Id,
+                Id = user.UserId,
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
@@ -115,13 +115,18 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             
             var addUserDto = new AddUserDto
             {
-                Email = registerRequest.Email,
+              
                 UserName = registerRequest.UserName,
                 FirstName = registerRequest.FirstName,
                 LastName = registerRequest.LastName,
+                Email = registerRequest.Email,
                 Password = registerRequest.Password,
+                PhoneNumber = registerRequest.PhoneNumber,
                 BirthDate = registerRequest.BirthDate
             };
+
+
+            
 
             var result = await _userService.AddUserAsync(addUserDto);
 
@@ -157,12 +162,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 Console.WriteLine($"{claim.Type}: {claim.Value}");
             }
 
-            //if (userId == null)
-            //{
-            //    return Unauthorized("Kullanıcı bilgileri bulunamadı.");
-            //}
-
-            // Veritabanından kullanıcı bilgilerini getir
+      
             var user = await _userService.GetUserByIdAsync(int.Parse(userId!));
 
             if (user == null)
@@ -170,13 +170,16 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 return Unauthorized("Kullanıcı bulunamadı.");
             }
           
-
-            return Ok(new
+            return Ok(new UserInfoDto
             {
                 UserId = user.UserId,
+                UserName = user.UserName,
                 Email = user.Email,
                 FirstName = user.FirstName,
-                LastName = user.LastName
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber,
+                BirthDate = user.BirthDate,
+                UserType = user.UserType,
             });
         }
 

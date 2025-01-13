@@ -1,27 +1,50 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
+using OnlineShoppingPlatform.Business.Validations;
 
 namespace OnlineShoppingPlatform.Presentation.Models.Auth
 {
     public class RegisterRequest
     {
 
-        [Required]
-        public string UserName { get; set; }
+     
+        //public int UserId { get; set; } // Primary Key 
 
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        [Required(ErrorMessage = "User name is required.")]
+        [StringLength(50, ErrorMessage = "User name cannot exceed 50 characters.")]
+        public string UserName { get; set; } = string.Empty; // Kullanıcının adı
 
-        [Required]
-        public string Password { get; set; }
-        [Required]
-        public string FirstName { get; set; }
-        [Required]
-        public string LastName { get; set; }
-        [Required]
+        [Required(ErrorMessage = "First name is required.")]
+        [StringLength(50, ErrorMessage = "First name cannot exceed 50 characters.")]
+        public string FirstName { get; set; } = string.Empty; // Kullanıcının adı
+
+        [Required(ErrorMessage = "Last name is required.")]
+        [StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters.")]
+        public string LastName { get; set; } = string.Empty; // Kullanıcının soyadı
+
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email format.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required.")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be between 6 and 100 characters.")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone number is required.")]
+        [Phone(ErrorMessage = "Invalid phone number format.")]
+        public string PhoneNumber { get; set; } = string.Empty; // Telefon numarası
+
+        // bunlar otomatik yapılacak kullanıcıdan almicaz
+        //[Required(ErrorMessage = "Usertype is required.")]
+        //public string UserType { get; set; } = string.Empty;
+
+        //[Required]
+        //public UserRole Role { get; set; } // Kullanıcı rolü
+
+        [Required(ErrorMessage = "BirthDate is required.")]
+        [JsonConverter(typeof(CustomDateTimeConverter))]
         public DateTime BirthDate { get; set; }
-
-        public string? PhoneNumber { get; set; } = string.Empty; // Telefon numarası
 
 
     }

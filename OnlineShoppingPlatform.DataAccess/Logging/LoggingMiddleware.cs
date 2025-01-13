@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,7 +28,8 @@ namespace OnlineShoppingPlatform.DataAccess.Logging
             {
                 Url = context.Request.Path,
                 RequestTime = DateTime.UtcNow,
-                ClientId = context.User?.Identity?.Name ?? "Anonymous" // Müşteri kimliği (varsa)
+                ClientId = context.User?.Identity?.Name ?? "Anonymous", // Müşteri kimliği (varsa)
+                UserId = -1
             };
 
             await _context.RequestLogs.AddAsync(log);

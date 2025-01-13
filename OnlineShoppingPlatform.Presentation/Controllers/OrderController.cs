@@ -35,29 +35,52 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpPost("addorder")]
         public async Task<IActionResult> AddOrder([FromBody] AddOrderRequest orderRequest)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             if (orderRequest == null || orderRequest.OrderProducts == null || !orderRequest.OrderProducts.Any())
             {
                 return BadRequest("Sipariş veya ürün bilgileri eksik.");
             }
 
+
+
+            // Toplam tutar ve sipariş ürünleri hazırlanıyor
+            decimal totalAmount = 0;
+            decimal unitPrice = 0;
+
+            var orderProducts = new List<OrderProduct>();
+
+            foreach (var orderProductRequest in orderRequest.OrderProducts)
+            {
+                // Ürünü getir
+                var product = await _productService.GetProductByIdAsync(orderProductRequest.ProductId);
+                if (product == null)
+                {
+                    return BadRequest($"Ürün bulunamadı: {orderProductRequest.ProductId}");
+                }
+
+                // Ürün fiyatını ve miktarını kullanarak toplam tutarı güncelle
+                unitPrice = (int)(product?.Price ?? 0); // Ürün fiyatı yoksa 0 kabul edilir
+                totalAmount += unitPrice * orderProductRequest.Quantity;
+
+                // Sipariş ürünü oluştur ve listeye ekle
+                orderProducts.Add(new OrderProduct
+                {
+                    ProductId = orderProductRequest.ProductId,
+                    Quantity = orderProductRequest.Quantity,
+                    UnitPrice = unitPrice
+                });
+            }
+
             var orderDto = new AddOrderDto
             {
-                CustomerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!),
-                TotalAmount = orderRequest.TotalAmount,
+                CustomerId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value!),
+                TotalAmount = totalAmount,
                 OrderStatus = orderRequest.OrderStatus
             };
-
-            var orderProducts = orderRequest.OrderProducts.Select(op =>
-            {
-                var product = _productService.GetProductByIdAsync(op.ProductId);
-          
-                return new OrderProduct
-                {
-                    ProductId = op.ProductId,
-                    Quantity = op.Quantity,
-                    UnitPrice = (product.Result?.Price ?? 0) // Fiyat yoksa 0 olarak al
-                };
-            }).ToList();
 
             var result = await _orderService.AddOrderAsync(orderDto, orderProducts);
 
@@ -103,10 +126,14 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Sipariş güncelleme
-        [Authorize]
         [HttpPut("update/{orderId}")]
         public async Task<IActionResult> UpdateOrder(int orderId, [FromBody] UpdateOrderRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             // UpdateOrderAsync metodunu çağırıyoruz
 
             var result = await _orderService.UpdateOrderAsync(orderId, request.UpdatedOrder, request.UpdatedOrderProducts);
@@ -124,7 +151,6 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
     
 
         // Sipariş silme
-        [Authorize(Roles = "Admin")]
         [HttpDelete("{orderId}")]
         public async Task<IActionResult> DeleteOrder(int orderId)
         {

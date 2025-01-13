@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using OnlineShoppingPlatform.Business.Validations;
-using OnlineShoppingPlatform.DataAccess.Entities.Enums;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace OnlineShoppingPlatform.Business.Operations.User.Dtos
+namespace OnlineShoppingPlatform.Presentation.Models.User
 {
-    public class AddUserDto
+    public class UpdateUserRequest
     {
+        [Required]
+        public int UserId { get; set; } // Primary Key 
+
         [Required(ErrorMessage = "User name is required.")]
         [StringLength(50, ErrorMessage = "User name cannot exceed 50 characters.")]
         public string UserName { get; set; } = string.Empty; // Kullanıcının adı
@@ -24,14 +19,14 @@ namespace OnlineShoppingPlatform.Business.Operations.User.Dtos
         [StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters.")]
         public string LastName { get; set; } = string.Empty; // Kullanıcının soyadı
 
-       
+
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Password is required.")]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be between 6 and 100 characters.")]
-        public string Password { get; set; } = string.Empty; 
+        public string Password { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Phone number is required.")]
         [Phone(ErrorMessage = "Invalid phone number format.")]
@@ -45,9 +40,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User.Dtos
         //public UserRole Role { get; set; } // Kullanıcı rolü
 
         [Required(ErrorMessage = "BirthDate is required.")]
-        [JsonConverter(typeof(CustomDateTimeConverter))]
+        [Range(typeof(DateTime), "1/1/1900", "12/31/2025", ErrorMessage = "BirthDate must be between 01/01/1900 and 12/31/2025.")]
         public DateTime BirthDate { get; set; }
-
-
     }
 }

@@ -10,13 +10,23 @@ namespace OnlineShoppingPlatform.Business.Operations.User.Dtos
 {
     public class UserInfoDto
     {
-        public int Id { get; set; }
+        public int UserId { get; set; }
+
+        public string UserName { get; set; } = string.Empty;
 
         public string Email { get; set; } = string.Empty;
 
         public string FirstName { get; set; } = string.Empty;
 
         public string LastName { get; set; } = string.Empty;
+
+        public string PhoneNumber { get; set; } = string.Empty; // Telefon numarası
+
+        public DateTime BirthDate { get; set; }
+
         public UserRole UserType { get; set; }
+
+
+
     }
 }

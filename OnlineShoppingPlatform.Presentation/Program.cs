@@ -110,6 +110,12 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin")); // "Admin" rolüne sahip kullanýcýlar için
+});
+
 var app = builder.Build();
 
 app.UseRouting();
@@ -123,8 +129,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-//app.UseMiddleware<LoggingMiddleware>(); // Ýstekler önce loglanýr
-//app.UseMiddleware<MaintenanceMiddleware>(); // Bakým modunu kontrol eden middleware
+app.UseMiddleware<LoggingMiddleware>(); // Ýstekler önce loglanýr
+app.UseMiddleware<MaintenanceMiddleware>(); // Bakým modunu kontrol eden middleware
 
 // Use Authentication and Authorization
 app.UseAuthentication();
