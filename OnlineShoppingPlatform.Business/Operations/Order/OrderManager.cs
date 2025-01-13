@@ -39,7 +39,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
                                          .ThenInclude(op => op.Product) // Ürün bilgilerini dahil ediyoruz
                                          .FirstOrDefault();  // İlk eşleşeni alıyoruz
 
-            return orderWithProducts;
+            return orderWithProducts!;
         }
 
         // Tüm siparişleri getirir

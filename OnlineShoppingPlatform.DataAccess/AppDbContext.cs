@@ -28,6 +28,15 @@ namespace OnlineShoppingPlatform.DataAccess
         public DbSet<RequestLog> RequestLogs { get; set; } // her isteği loglamak için 
         public DbSet<MaintenanceMode> MaintenanceModes { get; set; } // Middleware için 
 
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            // Tüm decimal özellikler için varsayılan hassasiyet (Precision: 18, Scale: 2)
+            configurationBuilder.Properties<decimal>()
+                .HavePrecision(18, 2);
+
+            base.ConfigureConventions(configurationBuilder);
+        }
+
 
         // Model konfigürasyonu
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,7 +48,7 @@ namespace OnlineShoppingPlatform.DataAccess
 
             modelBuilder.ApplyConfiguration(new RequestLogConfiguration());
 
-
+          
             base.OnModelCreating(modelBuilder);
 
             // ÖZEL DÜZELTMELER
@@ -76,11 +85,19 @@ namespace OnlineShoppingPlatform.DataAccess
                 .HasForeignKey(op => op.ProductId) // Specify the correct foreign key
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<OrderProduct>(entity =>
+            {
+                entity.Property(e => e.UnitPrice)
+                      .HasPrecision(18, 2); // Precision: 18 toplam basamak, Scale: 2 ondalık basamak
+            });
+
 
             // Benzersiz Email için Index
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
+
         }
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //{

@@ -5,6 +5,10 @@ using OnlineShoppingPlatform.DataAccess.Entities;
 using OnlineShoppingPlatform.DataAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using System.Runtime.CompilerServices;
+using OnlineShoppingPlatform.Business.Operations.User;
+using OnlineShoppingPlatform.Business.Operations.User.Dtos;
+using OnlineShoppingPlatform.Business.Types;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
@@ -13,74 +17,120 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly AppDbContext _context;  // AppDbContext'i ekledik
-
-        public UserController(UserManager<User> userManager, AppDbContext context)  // AppDbContext'i constructor'a ekledik
+        private readonly IUserService _userService;
+        public UserController(IUserService userService)
         {
-            _userManager = userManager;
-            _context = context;
+            _userService = userService;
         }
 
-        // Kullanıcı oluşturma
-        [HttpPost]
-        public async Task<IActionResult> CreateUser(User user)
+
+        [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllUsers()
         {
-            _context.Users.Add(user);  // _userManager yerine _context'i kullanarak veri ekliyoruz
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetUserById), new { id = user.UserId }, user);
+            try
+            {
+                var users = await _userService.GetAllUsersAsync();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = $"Kullanıcılar alınırken bir hata oluştu: {ex.Message}"
+                });
+            }
         }
 
-        // Kullanıcıyı Id ile Getirme
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUserById(int id)
+        [Authorize]
+        public async Task<IActionResult> GetUserById(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
+            if (id <= 0)
             {
-                return NotFound();
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz kullanıcı ID'si."
+                });
             }
 
-            return user;
-        }
-
-        // Kullanıcıları Listeleme
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers()
-        {
-            return await _context.Users.ToListAsync();
-        }
-
-        // Kullanıcı güncelleme
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, User user)
-        {
-            if (id != user.UserId)
+            try
             {
-                return BadRequest();
+                var user = await _userService.GetUserByIdAsync(id);
+
+                if (user == null)
+                {
+                    return NotFound(new ServiceMessage
+                    {
+                        IsSucceed = false,
+                        Message = "Kullanıcı bulunamadı."
+                    });
+                }
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = $"Kullanıcı bilgileri alınırken bir hata oluştu: {ex.Message}"
+                });
             }
 
-            _context.Entry(user).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
 
-            return NoContent();
         }
 
-        // Kullanıcı silme
+        [HttpPut("update")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto updateUserDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz veri girişi."
+                });
+            }
+
+            var result = await _userService.UpdateUserAsync(updateUserDto);
+
+            if (result.IsSucceed)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result);
+        }
+
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
+            if (id <= 0)
             {
-                return NotFound();
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz kullanıcı ID'si."
+                });
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            var result = await _userService.DeleteUserAsync(id);
 
-            return NoContent();
+            if (result.IsSucceed)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result);
         }
+
+
+
     }
 }
 

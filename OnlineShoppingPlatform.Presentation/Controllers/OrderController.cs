@@ -35,13 +35,11 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpPost("addorder")]
         public async Task<IActionResult> AddOrder([FromBody] AddOrderRequest orderRequest)
         {
-            // Kontrol 1: Gönderilen istek null mı?
             if (orderRequest == null || orderRequest.OrderProducts == null || !orderRequest.OrderProducts.Any())
             {
                 return BadRequest("Sipariş veya ürün bilgileri eksik.");
             }
 
-            // DTO oluştur
             var orderDto = new AddOrderDto
             {
                 CustomerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!),
@@ -61,10 +59,8 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 };
             }).ToList();
 
-            // Servis katmanına çağrı
             var result = await _orderService.AddOrderAsync(orderDto, orderProducts);
 
-            // İşlem sonucu
             if (result.IsSucceed)
             {
                 return Ok(result.Message);
@@ -107,13 +103,13 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Sipariş güncelleme
-        [Authorize(Roles = "Admin")]
-        [HttpPut("{orderId}")]
-        public async Task<IActionResult> UpdateOrder(int orderId, Order updatedOrder, List<OrderProduct> updatedOrderProducts)
+        [Authorize]
+        [HttpPut("update/{orderId}")]
+        public async Task<IActionResult> UpdateOrder(int orderId, [FromBody] UpdateOrderRequest request)
         {
             // UpdateOrderAsync metodunu çağırıyoruz
 
-            var result = await _orderService.UpdateOrderAsync(orderId, updatedOrder, updatedOrderProducts);
+            var result = await _orderService.UpdateOrderAsync(orderId, request.UpdatedOrder, request.UpdatedOrderProducts);
 
             // Eğer güncelleme başarılıysa
             if (result.IsSucceed)
@@ -125,6 +121,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 return BadRequest(result.Message);  // Hata mesajını döndürüyoruz
             }
         }
+    
 
         // Sipariş silme
         [Authorize(Roles = "Admin")]

@@ -12,14 +12,17 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
 {
     public interface IOrderService
     {
+        Task<OrderEntity> GetOrderByIdAsync(int orderId);
+        Task<List<OrderEntity>> GetAllOrdersAsync();
+
         Task<ServiceMessage> AddOrderAsync(AddOrderDto order, List<OrderProduct> orderProducts);
         Task<ServiceMessage> UpdateOrderAsync(int orderId, OrderEntity updatedOrder, List<OrderProduct> updatedOrderProducts);
         Task<ServiceMessage> DeleteOrderAsync(int orderId);
 
 
-        Task<OrderEntity> GetOrderByIdAsync(int orderId);
+       
 
-        Task<List<OrderEntity>> GetAllOrdersAsync();
+        
 
 
     }   

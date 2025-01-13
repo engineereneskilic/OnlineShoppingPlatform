@@ -10,7 +10,6 @@ using OnlineShoppingPlatform.Business.Operations.Product;
 using OnlineShoppingPlatform.Business.Operations.User;
 using OnlineShoppingPlatform.DataAccess;
 using OnlineShoppingPlatform.DataAccess.Entities;
-using OnlineShoppingPlatform.DataAccess.Entities.Services;
 using OnlineShoppingPlatform.DataAccess.Logging;
 using OnlineShoppingPlatform.DataAccess.Maintenance;
 using OnlineShoppingPlatform.DataAccess.Repositories;
@@ -23,52 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-//builder.Services.AddControllers(options =>
-//{
-//    options.Filters.Add(new TimeRestrictedAccessFilter("09:00", "17:00")); // Tüm API'ler için geçerli
-//});
 
-// JWT Configuration
-//var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-//var secretKey = jwtSettings.GetValue<string>("SecretKey");
-
-//if (secretKey == null)
-//{
-//    // Handle the null value (e.g., throw an exception or set a default value)
-//    throw new ArgumentNullException("SecretKey", "Secret key cannot be null.");
-//}
-
-//var key = Encoding.UTF8.GetBytes(secretKey);
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.RequireHttpsMetadata = false;
-//        options.SaveToken = true;
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidateAudience = true,
-//            ValidateLifetime = true,
-//            ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
-//            ValidAudience = jwtSettings.GetValue<string>("Audience"),
-//            IssuerSigningKey = new SymmetricSecurityKey(key)
-//        };
-//    });
-
-//builder.Services.AddAuthorization(options =>
-//{
-//    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-//    options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
-//});
-
-//builder.Services.AddCors(options =>
-//{
-//    options.AddDefaultPolicy(builder =>
-//    {
-//        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-//    });
-//});
-//jwt son
 
 // Register Services for Dependency Injection
 builder.Services.AddScoped<IUserService, UserManager>();
@@ -133,9 +87,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
                  ValidateLifetime = true, // süresi dolan tokeni kabul etme
 
-                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!)
+                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!))
 
-             )};
+             };
          });
 
 

@@ -45,6 +45,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return BadRequest(result.Message);
             }
+
         }
 
         // Ürün Id ile getirme
@@ -52,11 +53,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProductById(int id)
         {
-            //var product = await _context.Products.FindAsync(id);
-            //if (product == null)
-            //{
-            //    return NotFound();
-            //}
+ 
             var product = await _productService.GetProductByIdAsync(id);
             if(product == null)
             {
@@ -149,6 +146,8 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             {
                 return BadRequest(result.Message);
             }
+
+
         }
     }
 }

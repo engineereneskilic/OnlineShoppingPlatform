@@ -3,6 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using OnlineShoppingPlatform.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using OnlineShoppingPlatform.DataAccess.Maintenance;
+using OnlineShoppingPlatform.Business.Operations.Maintenance;
+using OnlineShoppingPlatform.Business.Operations.Maintenance.Dtos;
+using OnlineShoppingPlatform.Presentation.Models.Main;
+using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
+using OnlineShoppingPlatform.Business.Operations.Product;
+using OnlineShoppingPlatform.Presentation.Models.Maintenance;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
@@ -10,100 +16,142 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
     [ApiController]
     public class MaintenanceController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IMaintenance _maintenanceService;
 
-        public MaintenanceController(AppDbContext context)
+        public MaintenanceController(IMaintenance maintenance)
         {
-            _context = context;
+            _maintenanceService = maintenance;
         }
 
         [HttpPost("toggle")]
-        public async Task<IActionResult> ToggleMaintenanceModeOnOff()
+        public async Task<IActionResult> ToggleLastMaintenanceModeOnOff()
         {
-            var maintenance = await _context.MaintenanceModes.FirstOrDefaultAsync();
-            if (maintenance == null)
+            //var maintenance = await _context.MaintenanceModes.FirstOrDefaultAsync();
+            var result = await _maintenanceService.ToggleLastMaintenanceModeOnOff();
+
+            if (result.IsSucceed)
             {
-                //maintenance = new MaintenanceMode { IsActive = true };
-                //await _context.MaintenanceModes.AddAsync(maintenance);
-                return Ok("Herhangi bir bakım modu bulunmadığı için bakım modunu aktif yada pasif hale getiremezsiniz!");
+                return Ok(result);
             }
             else
             {
-                maintenance.IsActive = maintenance.IsActive ? false : true; 
+                return BadRequest(result.Message);
             }
 
-            await _context.SaveChangesAsync();
-            return Ok(new { Status = maintenance.IsActive ? "Aktif" : "Pasif" });
         }
+
+
         [HttpPost("toggle/{id}")]
         public async Task<IActionResult> ToggleMaintenanceModeOnOff(int id)
         {
-            // ID'ye göre bakım modunu bul
-            var maintenance = await _context.MaintenanceModes.FirstOrDefaultAsync(m => m.Id == id);
+            //var maintenance = await _context.MaintenanceModes.FirstOrDefaultAsync();
+            var result = await _maintenanceService.ToggleMaintenanceModeOnOff(id);
 
-            if (maintenance == null)
+            if (result.IsSucceed)
             {
-                return NotFound("Belirtilen bakım modu bulunamadı!");
+                return Ok(result);
             }
-
-            // Bakım modunun aktifliğini tersine çevir
-            maintenance.IsActive = maintenance.IsActive ? false : true;
-
-            // Değişiklikleri kaydet
-            await _context.SaveChangesAsync();
-
-            // Sonuç olarak aktif veya pasif olduğunu belirten bir cevap döndür
-            return Ok(new { Status = maintenance.IsActive ? "Aktif" : "Pasif" });
+            else
+            {
+                return BadRequest(result.Message);
+            }
         }
 
 
         [HttpPost]
-        public async Task<IActionResult> AddMaintenanceMode([FromBody] MaintenanceMode model)
+        public async Task<IActionResult> AddMaintenanceMode([FromBody] AddMaintenanceRequest addMaintenanceRequest)
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
+            }
 
-            _context.MaintenanceModes.Add(model);
-            await _context.SaveChangesAsync();
-            return Ok("Bakım modu başarıyla eklendi.");
+            var addMaintenanceDto = new AddMaintenanceDto
+            {
+                IsActive = addMaintenanceRequest.IsActive,
+                StartTime = addMaintenanceRequest.StartTime,
+                EndTime = addMaintenanceRequest.EndTime,
+                Message = addMaintenanceRequest.Message
+            };
+
+            var result = await _maintenanceService.AddMaintenanceAsync(addMaintenanceDto);
+
+            if (result.IsSucceed)
+            {
+                return Ok(result.Message);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMaintenanceMode(int id, [FromBody] MaintenanceMode model)
+        public async Task<IActionResult> UpdateMaintenanceMode(int id, [FromBody] UpdateMaintenanceRequest updateMaintenanceRequest)
         {
-            var maintenance = await _context.MaintenanceModes.FindAsync(id);
 
-            if (maintenance == null)
-                return NotFound("Bakım modu bulunamadı.");
+            var updateMaintenanceDto = new UpdateMaintenanceDto
+            {
+               MaintenanceId = id,
+               IsActive = updateMaintenanceRequest.IsActive,
+               Message = updateMaintenanceRequest.Message,
+               StartTime = updateMaintenanceRequest.StartTime,
+               EndTime = updateMaintenanceRequest.EndTime,
+            };
 
-            maintenance.StartTime = model.StartTime;
-            maintenance.EndTime = model.EndTime;
-            maintenance.Message = model.Message;
-            maintenance.IsActive = model.IsActive;
+            // Kontrol 1: Gönderilen ID ile ürünün ID'si eşleşiyor mu?
+            if (id != updateMaintenanceRequest.MaintenanceId)
+            {
+                return BadRequest("The provided ID does not match the product ID.");
+            }
 
+            // Kontrol 2: Gönderilen ürün verisi null mı?
+            if (updateMaintenanceDto == null)
+            {
+               return BadRequest("Maintenance data cannot be null.");
+            }
 
-            await _context.SaveChangesAsync();
-            return Ok("Bakım modu başarıyla güncellendi.");
+            // Kontrol 3: Veritabanında ürünün mevcut olup olmadığını kontrol et
+
+            var existingMaintenance = await _maintenanceService.GetMaintenanceByIdAsync(id);
+
+            if (existingMaintenance == null)
+            {
+                return NotFound("The Maintenance with the specified ID does not exist.");
+            }
+
+            var result = await _maintenanceService.UpdateMaintenanceAsync(updateMaintenanceDto);
+
+            if (result.IsSucceed)
+            {
+                return Ok(result.Message);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
+
         }
+
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteMaintenanceMode(int id)
         {
-            // ID'ye göre bakım modunu bul
-            var maintenance = await _context.MaintenanceModes.FirstOrDefaultAsync(m => m.Id == id);
-
-            if (maintenance == null)
+            if (id <= 0)
             {
-                return NotFound("Belirtilen bakım modu bulunamadı!");
+                return BadRequest("Geçersiz ID. Lütfen geçerli bir ID girin.");
             }
 
-            // Bakım modunu sil
-            _context.MaintenanceModes.Remove(maintenance);
+            var result = await _maintenanceService.DeleteMaintenanceAsync(id);
 
-            // Değişiklikleri kaydet
-            await _context.SaveChangesAsync();
+            if (result.IsSucceed)
+            {
+                return Ok(result.Message);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
 
-            // Silme işlemi başarılıysa, başarılı bir yanıt döndür
-            return Ok("Bakım modu başarıyla silindi.");
         }
 
 

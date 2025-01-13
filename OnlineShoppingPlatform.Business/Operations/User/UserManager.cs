@@ -12,6 +12,9 @@ using OnlineShoppingPlatform.Business.Operations.User.Dtos;
 using OnlineShoppingPlatform.DataAccess.Repositories;
 using OnlineShoppingPlatform.Business.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using UserEntity = OnlineShoppingPlatform.DataAccess.Entities.User;
+using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
+
 
 namespace OnlineShoppingPlatform.Business.Operations.User
 {
@@ -19,39 +22,56 @@ namespace OnlineShoppingPlatform.Business.Operations.User
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        private readonly IRepository<DataAccess.Entities.User> _userepository;
+        private readonly IRepository<UserEntity> _userepository;
 
         private readonly IDataProtection _dataProtector;
 
-        public UserManager(IUnitOfWork unitOfWork, IRepository<DataAccess.Entities.User> userrepository, IDataProtection dataProtector)
+        public UserManager(IUnitOfWork unitOfWork, IRepository<UserEntity> userrepository, IDataProtection dataProtector)
         {
             _unitOfWork = unitOfWork;
             _userepository = userrepository;
             _dataProtector = dataProtector;
         }
 
-        public async Task<ServiceMessage> CreateUserAsync(AddUserDto user)
+   
+        public async Task<ServiceMessage> AddUserAsync(AddUserDto user)
         {
-             // gelen kullanıcı email adresi ile daha önceden kayıt olup olmadığı kontrol ediliyor
-            if (user.Email != null)
+
+
+            if (user == null)
             {
-                // Email kontrolü
-                var hasMail = await _userepository.GetByQueryAsync(x => x.Email.ToLower() == user.Email.ToLower());
-
-                if (hasMail.Any())
+                return new ServiceMessage
                 {
-                    return new ServiceMessage
-                    {
-                        IsSucceed = false,
-                        Message = "Email adresi zaten mevcut"
-                    };
-                }
-                // Eğer kayıtlıysa sisteme ilk gelen kullanıcı mı olup olmadığı bulunuyor. Eğer öyleyse rolü Admin olarak atanıyor eğer deilse sonradan gelenler Customer olacak şekilde atanıyor.
+                    IsSucceed = false,
+                    Message = "Kullanıcı bilgileri boş olamaz!"
+                };
+            }
 
-                bool isFirstUser = await _userepository.isFirstAsync();
+            if (string.IsNullOrEmpty(user.Email) || !user.Email.Contains("@"))
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçerli bir email adresi giriniz!"
+                };
+            }
+
+            // E-posta kontrolü
+            var existingUser = await _userepository.GetByQueryAsync(x => x.Email.ToLower() == user.Email.ToLower());
+            if (existingUser.Any())
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Bu e-posta adresi zaten kullanılmaktadır."
+                };
+            }
+            // Eğer kayıtlıysa sisteme ilk gelen kullanıcı mı olup olmadığı bulunuyor. Eğer öyleyse rolü Admin olarak atanıyor eğer deilse sonradan gelenler Customer olacak şekilde atanıyor.
+
+            bool isFirstUser = await _userepository.isFirstAsync();
 
 
-                var newuser = new DataAccess.Entities.User()
+                var newuser = new UserEntity()
                 {
                     UserName = user.UserName,
                     Email = user.Email,
@@ -64,12 +84,12 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                 };
 
                 await _userepository.AddAsync(newuser);
-               
+
 
                 try
                 {
                     await _unitOfWork.DbSaveChangesAsync();
-             
+
                 }
                 catch (Exception)
                 {
@@ -82,24 +102,27 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                     IsSucceed = true,
                     Message = "Kullanıcı başarıyla eklendi"
                 };
-               
-            } else
-            {
-                return new ServiceMessage
-                {
-                    IsSucceed = false,
-                    Message = "Lütfen geçerli bir email adresi giriniz !"
-                };
-            }
+
+            
+           
         }
 
+      
 
 
         public async Task<ServiceMessage<UserInfoDto>> LoginUserAsync(LoginUserDto loginUserDto)
         {
-             var user = await _userepository.GetAsync(x => x.Email.ToLower() == loginUserDto.Email.ToLower());
 
-   
+            if (loginUserDto == null || string.IsNullOrEmpty(loginUserDto.Email) || string.IsNullOrEmpty(loginUserDto.Password))
+            {
+                return new ServiceMessage<UserInfoDto>
+                {
+                    IsSucceed = false,
+                    Message = "E-posta ve şifre alanları boş olamaz!"
+                };
+            }
+
+            var user = await _userepository.GetAsync(x => x.Email.ToLower() == loginUserDto.Email.ToLower());
 
             if(user is null )
             {
@@ -134,6 +157,125 @@ namespace OnlineShoppingPlatform.Business.Operations.User
                 };
             }
         }
+
+        public async Task<List<UserEntity>> GetAllUsersAsync()
+        {
+            var users = await _userepository.GetAllAsync();
+            if (users == null || !users.Any())
+            {
+                throw new Exception("Kayıtlı kullanıcı bulunamadı.");
+            }
+
+            return users.ToList();
+        }
+
+        public async Task<UserEntity> GetUserByIdAsync(int id)
+        {
+            if (id <= 0)
+            {
+                throw new ArgumentException("Geçersiz kullanıcı ID'si.");
+            }
+
+            var user = await _userepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                throw new Exception("Kullanıcı bulunamadı.");
+            }
+
+            return user;
+        }
+
+
+        public async Task<ServiceMessage> UpdateUserAsync(UpdateUserDto updateUserDto)
+        {
+            if (updateUserDto == null || updateUserDto.UserId <= 0)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz kullanıcı bilgileri."
+                };
+            }
+
+            var user = await _userepository.GetByIdAsync(updateUserDto.UserId);
+            if (user == null)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Güncellenecek kullanıcı bulunamadı."
+                };
+            }
+
+            // Kullanıcı bilgilerini güncelle
+            user.FirstName = updateUserDto.FirstName ?? user.FirstName;
+            user.LastName = updateUserDto.LastName ?? user.LastName;
+            user.Email = updateUserDto.Email ?? user.Email;
+
+            try
+            {
+                await _userepository.UpdateAsync(user);
+                await _unitOfWork.DbSaveChangesAsync();
+
+                return new ServiceMessage
+                {
+                    IsSucceed = true,
+                    Message = "Kullanıcı başarıyla güncellendi."
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = $"Güncelleme sırasında bir hata oluştu: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<ServiceMessage> DeleteUserAsync(int id)
+        {
+            if (id <= 0)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz kullanıcı ID'si."
+                };
+            }
+
+            var user = await _userepository.GetByIdAsync(id);
+            if (user == null)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Silinecek kullanıcı bulunamadı."
+                };
+            }
+
+            try
+            {
+                await _userepository.DeleteAsync(user);
+                await _unitOfWork.DbSaveChangesAsync();
+
+                return new ServiceMessage
+                {
+                    IsSucceed = true,
+                    Message = "Kullanıcı başarıyla silindi."
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = $"Kullanıcı silinirken bir hata oluştu: {ex.Message}"
+                };
+            }
+        }
+
+     
 
         /***********************************************************************/
 

@@ -20,16 +20,13 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
 
         private readonly IUserService _userService;
 
-        public AuthController(AppDbContext context, IConfiguration configuration, IUserService userService)
+        public AuthController(IConfiguration configuration, IUserService userService)
         {
-            _context = context;
             _configuration = configuration;
-
             _userService = userService;
         }
 
@@ -42,13 +39,10 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             }
 
 
-
             // Login işlemi
             var result = await _userService.LoginUserAsync(
                 new LoginUserDto { Email = loginRequest.Email, Password = loginRequest.Password }
             );
-
-          
 
             // Giriş başarısızsa
             if (!result.IsSucceed)
@@ -118,7 +112,6 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             // Senaryo : Eğer daha önceden veritabanına kayıtlı biri yoksa rolü admin ata ondan sonra gelenler hep Customer olsun
             //var resultFirstOne = await _use
 
-
             
             var addUserDto = new AddUserDto
             {
@@ -130,7 +123,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 BirthDate = registerRequest.BirthDate
             };
 
-            var result = await _userService.CreateUserAsync(addUserDto);
+            var result = await _userService.AddUserAsync(addUserDto);
 
             if (result.IsSucceed)
             {
@@ -146,11 +139,46 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
         [HttpGet("me")]
         [Authorize]
-        public IActionResult GetMyUser()
+        public async Task<IActionResult> GetMyUserAsync()
         {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value;
 
-            return Ok("Hoşgeldiniz");
-        } 
+            if(userId == null) 
+            {
+                return Unauthorized("Kullanıcı bilgileri bulunamadı.");
+
+            }
+
+            if (int.Parse(userId) == 0) userId = "1";
+
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            foreach (var claim in claims)
+            {
+                Console.WriteLine($"{claim.Type}: {claim.Value}");
+            }
+
+            //if (userId == null)
+            //{
+            //    return Unauthorized("Kullanıcı bilgileri bulunamadı.");
+            //}
+
+            // Veritabanından kullanıcı bilgilerini getir
+            var user = await _userService.GetUserByIdAsync(int.Parse(userId!));
+
+            if (user == null)
+            {
+                return Unauthorized("Kullanıcı bulunamadı.");
+            }
+          
+
+            return Ok(new
+            {
+                UserId = user.UserId,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
+            });
+        }
 
     }
 }

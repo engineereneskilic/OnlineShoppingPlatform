@@ -11,8 +11,8 @@ namespace OnlineShoppingPlatform.DataAccess.Maintenance
     public class MaintenanceMode
     {
         [Key]
-        [JsonIgnore] // Bu property'nin JSON çıktısında görünmemesini sağlar
-        public int Id { get; set; } // Primary Key
+        //[JsonIgnore] // Bu property'nin JSON çıktısında görünmemesini sağlar
+        public int MaintenanceId { get; set; } // Primary Key
 
         [Required]
         public bool IsActive { get; set; } // Bakım modunun aktiflik durumu
