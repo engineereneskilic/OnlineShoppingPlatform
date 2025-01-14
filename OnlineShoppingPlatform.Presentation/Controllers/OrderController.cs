@@ -14,7 +14,6 @@ using OnlineShoppingPlatform.Business.Operations.Order.Dtos;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class OrderController : ControllerBase
@@ -31,8 +30,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
 
         // Sipariş oluşturma
-        [Authorize]
-        [HttpPost("addorder")]
+        [HttpPost]
         public async Task<IActionResult> AddOrder([FromBody] AddOrderRequest orderRequest)
         {
             // Model doğrulama: Eksik veya hatalı veriler kontrol edilir
@@ -83,9 +81,10 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             // Sipariş DTO'su oluşturuluyor
             var orderDto = new AddOrderDto
             {
-                CustomerId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value ?? "0"), // Kullanıcı kimliği
+                CustomerId = int.TryParse(User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value, out var id) && id > 0 ? id : 1, // Kullanıcı kimliği
                 TotalAmount = totalAmount,    // Toplam sipariş tutarı
                 OrderStatus = orderRequest.OrderStatus // Sipariş durumu
+                
             };
 
             // Siparişi eklemek için servis çağrısı yapılıyor
@@ -105,59 +104,150 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
 
         // Siparişi Id ile getirme
-        [Authorize]
         [HttpGet("{orderId}")]
-        public async Task<IActionResult> GetOrderById(int orderId)
+        public async Task<ActionResult<OrderInfoDto>> GetOrderById(int orderId)
         {
-            var result = await _orderService.GetOrderByIdAsync(orderId);
+            var order = await _orderService.GetOrderByIdAsync(orderId);
 
-            if (result == null)
+            if (order == null)
             {
                 // Sipariş bulunamadı
                 return NotFound("The order with the specified ID does not exist.");
             }
 
-            return Ok(result);
+            // DTO'ya dönüştürüyoruz
+            var orderInfoDto = new OrderInfoDto
+            {
+                OrderId = order.OrderId,
+                OrderDate = order.OrderDate,
+                OrderStatus = order.OrderStatus,
+
+                Products = order.OrderProducts
+                        .Where(op => op.Product != null) // null olan ürünleri filtrele
+                .Select(op => new OrderProductInfoDto
+                {
+                    ProductId = op.Product!.ProductId, // '!' ile null olmadığını belirtiyoruz
+                    ProductName = op.Product.ProductName ?? "Unknown Product", // null kontrol
+                    UnitPrice = op.Product.Price,
+                    Quantity = op.Quantity
+                }).ToList(),
+                TotalAmount = order.TotalAmount
+
+            };
+
+            return Ok(orderInfoDto);
         }
 
         // Siparişleri listeleme
         [HttpGet("all")]
-        public async Task<IActionResult> GetAllOrders()
+        public async Task<ActionResult<List<OrderInfoDto>>> GetAllOrders()
         {
+            // Tüm siparişleri veritabanından çekiyoruz
             var orders = await _orderService.GetAllOrdersAsync();
 
-            if (orders == null || !orders.Any())
-            {
-                return NotFound("No orders found.");
-            }
+            
 
-            return Ok(orders);
+            // Siparişleri DTO'ya dönüştürüyoruz
+            var orderInfoDtos = orders.Select(order => new OrderInfoDto
+            {
+                OrderId = order.OrderId,
+                OrderDate = order.OrderDate,
+                OrderStatus = order.OrderStatus,
+                Products = order.OrderProducts
+                    .Where(op => op.Product != null) // null olan ürünleri filtrele
+                    .Select(op => new OrderProductInfoDto
+                    {
+                        ProductId = op.Product!.ProductId,
+                        ProductName = op.Product.ProductName ?? "Unknown Product",
+                        UnitPrice = op.Product.Price,
+                        Quantity = op.Quantity
+                    }).ToList(),
+                TotalAmount = order.TotalAmount
+            }).ToList();
+
+            return Ok(orderInfoDtos);
         }
 
         // Sipariş güncelleme
-        [HttpPut("update/{orderId}")]
-        public async Task<IActionResult> UpdateOrder(int orderId, [FromBody] UpdateOrderRequest request)
+        [HttpPut("{orderId}")]
+        public async Task<IActionResult> UpdateOrder(int orderId, [FromBody] UpdateOrderRequest orderRequest)
         {
+            // Model doğrulama: Eksik veya hatalı veriler kontrol edilir
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            // UpdateOrderAsync metodunu çağırıyoruz
+            // Gelen sipariş isteği null kontrolü
+            if (orderRequest == null)
+            {
+                return BadRequest("Sipariş veya ürün bilgileri eksik.");
+            }
 
-            var result = await _orderService.UpdateOrderAsync(orderId, request.UpdatedOrder, request.UpdatedOrderProducts);
+            // Güncellenen siparişin veritabanında mevcut olup olmadığını kontrol et - ana kutu için
+            var existingOrder = await _orderService.GetOrderByIdAsync(orderId);
+            if (existingOrder == null)
+            {
+                return NotFound($"Sipariş bulunamadı: {orderRequest.OrderId}");
+            }
 
-            // Eğer güncelleme başarılıysa
+            // Toplam tutarı hesaplamak için değişken
+            decimal totalAmount = 0;
+
+            // Sipariş ürünleri listesi oluşturuluyor
+            var updatedOrderProducts = new List<OrderProduct>();
+
+            // Sipariş içindeki her bir ürünü işliyoruz
+            foreach (var orderProductRequest in orderRequest.OrderProducts)
+            {
+                // Ürünü veritabanından getiriyoruz
+                var product = await _productService.GetProductByIdAsync(orderProductRequest.ProductId);
+
+                // Ürün kontrolü: Ürün bulunamazsa hata döndür
+                if (product == null)
+                {
+                    return BadRequest($"Ürün bulunamadı: {orderProductRequest.ProductId}");
+                }
+
+                // Ürün fiyatı yoksa 0 kabul edilir
+                var unitPrice = (int)(product?.Price ?? 0);
+
+                // Toplam tutarı güncelle
+                totalAmount += unitPrice * orderProductRequest.Quantity;
+
+                // Güncellenen sipariş ürününü oluştur ve listeye ekle
+                updatedOrderProducts.Add(new OrderProduct
+                {
+                    ProductId = orderProductRequest.ProductId, // Ürün kimliği
+                    Quantity = orderProductRequest.Quantity,   // Sipariş miktarı
+                    UnitPrice = unitPrice                      // Ürün fiyatı
+                });
+            }
+
+            // Güncellenen sipariş DTO'su oluşturuluyor
+            var updatedOrderDto = new UpdateOrderDto
+            {
+                OrderId = orderRequest.OrderId,             // Sipariş kimliği
+                CustomerId = existingOrder.CustomerId,      // Müşteri kimliği
+                TotalAmount = totalAmount,                  // Toplam sipariş tutarı
+                OrderStatus = orderRequest.OrderStatus      // Sipariş durumu
+            };
+
+            // Siparişi güncellemek için servis çağrısı yapılıyor
+            var result = await _orderService.UpdateOrderAsync(orderId, updatedOrderDto, updatedOrderProducts);
+
+            // İşlem sonucu kontrol ediliyor
             if (result.IsSucceed)
             {
-                return Ok(result.Message);  // Başarı mesajı döndürüyoruz
+                return Ok(result.Message); // Başarılı ise mesaj döndür
             }
             else
             {
-                return BadRequest(result.Message);  // Hata mesajını döndürüyoruz
+                return BadRequest(result.Message); // Başarısız ise hata mesajı döndür
             }
         }
-    
+
+
 
         // Sipariş silme
         [HttpDelete("{orderId}")]

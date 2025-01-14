@@ -14,8 +14,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Product.Dtos
         [StringLength(100, ErrorMessage = "Product name cannot exceed 100 characters.")]
         public string ProductName { get; set; } = string.Empty;  // Ürün adı
 
-        [Required(ErrorMessage = "Price is required.")]
-        [Range(1, double.MaxValue, ErrorMessage = "Price must be greater than 0.")]
+        [Required(ErrorMessage = "Price is required.")]        
         public decimal Price { get; set; } // Fiyat
 
         [Required(ErrorMessage = "Stock quantity is required.")]

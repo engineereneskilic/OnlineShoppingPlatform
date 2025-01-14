@@ -17,6 +17,8 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
 
         Task<T> GetByIdAsync(int id);
 
+        Task<int> GetTotalCountsAsync();
+
         Task<bool> isFirstAsync();
 
 

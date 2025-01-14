@@ -25,7 +25,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
 
         public User User { get; set; } = new User(); // Siparişi veren müşteri
 
-        public ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>(); // Siparişin ürünleri
+        public ICollection<OrderProduct>? OrderProducts { get; set; } = new List<OrderProduct>(); // Siparişin ürünleri
     }
 
     public class OrderConfiguration : BaseConfigiration<Order>

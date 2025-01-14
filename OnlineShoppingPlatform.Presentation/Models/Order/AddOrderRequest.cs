@@ -18,23 +18,4 @@ namespace OnlineShoppingPlatform.Presentation.Models.Order
         [Required(ErrorMessage = "OrderProducts is required.")]
         public ICollection<OrderProductRequest> OrderProducts { get; set; } = new List<OrderProductRequest>();
     }
-
-    /// <summary>
-    /// Sipariş ürünü için istek modeli
-    /// </summary>
-    public class OrderProductRequest
-    {
-        /// <summary>
-        /// Ürün kimliği
-        /// </summary>
-        [Required(ErrorMessage = "ProductId is required.")]
-        public int ProductId { get; set; }
-
-        /// <summary>
-        /// Sipariş miktarı
-        /// </summary>
-        [Required(ErrorMessage = "Quantity is required.")]
-        [Range(1,20, ErrorMessage = "Quantity must be at least 1.")]
-        public int Quantity { get; set; }
-    }
 }

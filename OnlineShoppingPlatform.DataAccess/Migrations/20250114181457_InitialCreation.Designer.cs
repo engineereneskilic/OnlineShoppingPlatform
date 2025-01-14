@@ -12,7 +12,7 @@ using OnlineShoppingPlatform.DataAccess;
 namespace OnlineShoppingPlatform.DataAccess.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250114134150_InitialCreation")]
+    [Migration("20250114181457_InitialCreation")]
     partial class InitialCreation
     {
         /// <inheritdoc />

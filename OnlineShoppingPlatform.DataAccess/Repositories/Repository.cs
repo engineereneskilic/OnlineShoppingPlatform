@@ -104,5 +104,10 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
 
             return count == 0; // Eğer sayılar sıfırsa, bu ilk kayıt demektir
         }
+
+        public async Task<int> GetTotalCountsAsync()
+        {
+            return await _dbSet.CountAsync();
+        }
     }
 }

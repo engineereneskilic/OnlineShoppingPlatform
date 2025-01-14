@@ -16,13 +16,16 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
         Task<List<OrderEntity>> GetAllOrdersAsync();
 
         Task<ServiceMessage> AddOrderAsync(AddOrderDto order, List<OrderProduct> orderProducts);
-        Task<ServiceMessage> UpdateOrderAsync(int orderId, OrderEntity updatedOrder, List<OrderProduct> updatedOrderProducts);
+        Task<ServiceMessage> UpdateOrderAsync(int orderId, UpdateOrderDto updatedOrderDto, List<OrderProduct> updatedOrderProducts);
         Task<ServiceMessage> DeleteOrderAsync(int orderId);
 
 
-       
+        Task<int> GetTotalCountOrders();
 
-        
+        Task<decimal> CheckTotalAmountforOrderById(int orderId);
+
+
+
 
 
     }   

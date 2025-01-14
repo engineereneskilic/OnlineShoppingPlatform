@@ -9,8 +9,7 @@ namespace OnlineShoppingPlatform.Presentation.Models.Product
         public string ProductName { get; set; } = string.Empty;  // Ürün adı
 
         [Required(ErrorMessage = "Price is required.")]
-        [Range(1, 99999, ErrorMessage = "Price must be greater than 0.")]
-        public decimal Price { get; set; } = 10m; // Fiyat
+        public decimal Price { get; set; } = 100; // Fiyat
 
         [Required(ErrorMessage = "Stock quantity is required.")]
         [Range(1, 100, ErrorMessage = "Stock quantity cannot be negative.")]

@@ -7,10 +7,13 @@ using System.Threading.Tasks;
 using OnlineShoppingPlatform.DataAccess.Entities;
 using OnlineShoppingPlatform.DataAccess.Repositories;
 using OrderEntity = OnlineShoppingPlatform.DataAccess.Entities.Order;
+using UserEntity = OnlineShoppingPlatform.DataAccess.Entities.User;
+using ProductEntity = OnlineShoppingPlatform.DataAccess.Entities.Product;
 using System.Runtime.CompilerServices;
 using OnlineShoppingPlatform.Business.Types;
 using OnlineShoppingPlatform.Business.Operations.Order.Dtos;
 using Microsoft.EntityFrameworkCore;
+using OnlineShoppingPlatform.Business.Operations.Product;
 
 
 namespace OnlineShoppingPlatform.Business.Operations.Order
@@ -21,25 +24,41 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
         private readonly IRepository<OrderEntity> _repository;
         private readonly IRepository<OrderProduct> _orderproductRepository;
 
-        public OrderManager(IUnitOfWork unitOfWork, IRepository<OrderEntity> repository, IRepository<OrderProduct> orderproductRepository)
+        private readonly IRepository<UserEntity> _userRepository;
+        private readonly IRepository<ProductEntity> _productRepository;
+
+        public OrderManager(IUnitOfWork unitOfWork, IRepository<OrderEntity> repository, IRepository<OrderProduct> orderproductRepository, IRepository<UserEntity> userRepository, IRepository<ProductEntity> productRepository)
         {
             _unitOfWork = unitOfWork;
             _repository = repository;
             _orderproductRepository = orderproductRepository;
+            _userRepository = userRepository;
+            _productRepository = productRepository;
         }
 
         // ID'ye göre siparişi getirir
         public async Task<OrderEntity> GetOrderByIdAsync(int orderId)
         {
+            // Sipariş ve ilişkili ürünleri veritabanından alıyoruz
+            //var order = await _repository.GetByIdAsync(orderId);
+
+            
+
+
             // Siparişi ve ilişkili ürünleri almak için asenkron sorgu
             var order = await _repository.GetByQueryAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+                throw new KeyNotFoundException("Order not found");
 
             // İlişkili ürünleri dahil etmek için Include ve ThenInclude kullanıyoruz
             var orderWithProducts = order.Include(o => o.OrderProducts)
                                          .ThenInclude(op => op.Product) // Ürün bilgilerini dahil ediyoruz
                                          .FirstOrDefault();  // İlk eşleşeni alıyoruz
+            if (orderWithProducts == null)
+                throw new KeyNotFoundException("Order with Products not found");
 
-            return orderWithProducts!;
+            return orderWithProducts;
         }
 
         // Tüm siparişleri getirir
@@ -48,19 +67,25 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
             // Tüm siparişleri asenkron olarak alın
             var orders = await _repository.GetAllAsync();
 
-            // Include ve ThenInclude kullanarak ilişkili ürünleri dahil edin
-            var ordersWithProducts = orders.Include(o => o.OrderProducts)
-                                            .ThenInclude(op => op.Product) // Ürün bilgilerini dahil ediyoruz
-                                            .ToList();
+            if (orders == null || !orders.Any())
+                throw new KeyNotFoundException("No orders found.");
 
-            return ordersWithProducts;
+            // İlişkili ürünleri dahil etmek için Include ve ThenInclude kullanıyoruz
+            var orderWithProducts = orders.Include(o => o.OrderProducts)
+                                         .ThenInclude(op => op.Product) // Ürün bilgilerini dahil ediyoruz
+                                         .ToList(); // İlk eşleşeni alıyoruz
+            if (orderWithProducts == null)
+                throw new KeyNotFoundException("Order with Products not found");
+
+
+            return orderWithProducts;
         }
 
         // Yeni bir sipariş oluşturur
-        public async Task<ServiceMessage> AddOrderAsync(AddOrderDto order, List<OrderProduct> orderProducts)
+        public async Task<ServiceMessage> AddOrderAsync(AddOrderDto addOrderDto, List<OrderProduct> orderProducts)
         {
 
-            if (order == null || orderProducts == null || !orderProducts.Any())
+            if (addOrderDto == null || orderProducts == null || !orderProducts.Any())
             {
                 return new ServiceMessage
                 {
@@ -71,11 +96,17 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
 
             await _unitOfWork.BeginTransaction();
 
+            var CurrentUser = await _userRepository.GetByIdAsync(addOrderDto.CustomerId);
+            //var CurrentOrderId = await _repository.GetTotalCountsAsync() + 1;
+
             var newOrder = new OrderEntity
             {
-                CustomerId = order.CustomerId,
-                TotalAmount = order.TotalAmount,
-                OrderStatus = order.OrderStatus
+                CustomerId = addOrderDto.CustomerId,
+                TotalAmount = addOrderDto.TotalAmount,
+                OrderStatus = addOrderDto.OrderStatus,
+                User = CurrentUser,
+               
+
             };
            
             try
@@ -89,10 +120,15 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
                 throw new Exception("Sipariş kaydı sırasında bir sorunla karşılaşıldı");
             }
 
+           // var CurrentOrderProductID = await _repository.GetTotalCountsAsync() + 1;
+
             // Sipariş ürünlerini ekle
             foreach (var product in orderProducts)
             {
                 product.OrderId = newOrder.OrderId;
+                product.OrderProductId = newOrder.OrderId;
+
+
                 await _orderproductRepository.AddAsync(product);
             }
 
@@ -118,7 +154,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
         }
 
         // Siparişi günceller
-        public async Task<ServiceMessage> UpdateOrderAsync(int orderId, OrderEntity updatedOrder, List<OrderProduct> updatedOrderProducts)
+        public async Task<ServiceMessage> UpdateOrderAsync(int orderId, UpdateOrderDto updatedOrderDto, List<OrderProduct> updatedOrderProducts)
         {
             // 1. Siparişin mevcut olup olmadığını kontrol et
             var existingOrder = await _repository.GetByIdAsync(orderId);
@@ -131,11 +167,16 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
                     Message = "The order with the specified ID does not exist."
                 };
             }
+            var CurrentUser = await _userRepository.GetByIdAsync(updatedOrderDto.CustomerId);
 
             // 2. Sipariş bilgilerini güncelle
-            existingOrder.CustomerId = updatedOrder.CustomerId;
-            existingOrder.OrderDate = updatedOrder.OrderDate;
-            existingOrder.OrderStatus = updatedOrder.OrderStatus;
+            existingOrder.CustomerId = updatedOrderDto.CustomerId;
+            existingOrder.User = CurrentUser;
+            existingOrder.OrderDate = updatedOrderDto.OrderDate;
+            existingOrder.OrderStatus = updatedOrderDto.OrderStatus;
+
+           
+
 
             // 3. Sipariş ürünlerini güncelle
             foreach (var updatedProduct in updatedOrderProducts)
@@ -150,15 +191,32 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
                 }
                 else
                 {
+                    return new ServiceMessage
+                    {
+                        IsSucceed = false,
+                        Message = $"{updatedProduct.ProductId} id numaralı ürün bulunmuyor, o nedenle bu siparişe ekleyemezsiniz."
+                    };
+
                     // Eğer ürün mevcut değilse, yeni bir ürün ekleyelim
-                    existingOrder.OrderProducts.Add(updatedProduct);
+                    //existingOrder.OrderProducts.Add(updatedProduct);
                 }
             }
+
+
+
+            
+
 
             // 4. Güncellenen siparişi ve ürünleri kaydet
             try
             {
                 await _unitOfWork.DbSaveChangesAsync();  // Değişiklikleri kaydet
+
+                // Total Amount Güncelle
+                existingOrder.TotalAmount = await CheckTotalAmountforOrderById(orderId); 
+
+                await _unitOfWork.DbSaveChangesAsync();  // Değişiklikleri kaydet
+
             }
             catch (Exception)
             {
@@ -214,6 +272,47 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
             };
         }
 
+        public async Task<int> GetTotalCountOrders()
+        {
+            return await _repository.GetTotalCountsAsync();
+        }
 
+        public async Task<decimal> CheckTotalAmountforOrderById(int orderId)
+        {
+            // Total Amount Hesabı - Tüm ürünler en baştan ele alınır ve totalamount hesaplanır
+            var existingOrderwithProducts = await GetOrderByIdAsync(orderId);
+
+            decimal totalAmount = 0;
+
+            if (existingOrderwithProducts.OrderProducts != null)
+            {
+                foreach (var product in existingOrderwithProducts.OrderProducts)
+                {
+
+                    // Ürünü veritabanından getiriyoruz
+                    var existProduct = await _productRepository.GetByIdAsync(product.ProductId);
+
+                    // Ürün kontrolü: Ürünün bulunmama ihtimali yok elimizde ürün mutkala var listeden geliyor hiç yoksa buraya gelmez
+                    //if (existProduct == null)
+                    //{
+                    //    return new ServiceMessage
+                    //    {
+                    //        IsSucceed = false,
+                    //        Message = $"{product.Product} id numaralı ürün bulunmuyor"
+                    //    };
+                    //}
+
+                    // Ürün fiyatı yoksa 0 kabul edilir
+                    var unitPrice = (int)(existProduct?.Price ?? 0);
+
+                    // Toplam tutarı güncelle
+                    totalAmount += unitPrice * product.Quantity;
+                }
+
+                //existingOrder.TotalAmount = totalAmount;
+                
+            }
+            return totalAmount;
+        } 
     }
 }

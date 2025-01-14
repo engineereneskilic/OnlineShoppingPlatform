@@ -26,7 +26,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Ürün oluşturma
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> AddProduct(AddProductRequest productRequest)
         {
@@ -55,7 +55,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Ürün Id ile getirme
-        [Authorize]
+        //[Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductInfoDto>> GetProductById(int id)
         {
@@ -82,7 +82,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Ürünleri listeleme
-        [Authorize]
+        //[Authorize]
         [HttpGet("all")]
         public async Task<ActionResult<List<ProductInfoDto>>> GetAllProducts()
         {
@@ -104,7 +104,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Ürün güncelleme
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateProduct(int id, UpdateProductRequest productRequest)
         {
@@ -149,7 +149,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         }
 
         // Ürün silme
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
