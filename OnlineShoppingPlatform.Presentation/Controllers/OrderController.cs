@@ -35,64 +35,73 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpPost("addorder")]
         public async Task<IActionResult> AddOrder([FromBody] AddOrderRequest orderRequest)
         {
+            // Model doğrulama: Eksik veya hatalı veriler kontrol edilir
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (orderRequest == null || orderRequest.OrderProducts == null || !orderRequest.OrderProducts.Any())
+            // Gelen sipariş isteği null kontrolü
+            if (orderRequest == null)
             {
                 return BadRequest("Sipariş veya ürün bilgileri eksik.");
             }
 
-
-
-            // Toplam tutar ve sipariş ürünleri hazırlanıyor
+            // Toplam tutarı hesaplamak için değişken
             decimal totalAmount = 0;
-            decimal unitPrice = 0;
 
+            // Sipariş ürünleri listesi oluşturuluyor
             var orderProducts = new List<OrderProduct>();
 
+            // Sipariş içindeki her bir ürünü işliyoruz
             foreach (var orderProductRequest in orderRequest.OrderProducts)
             {
-                // Ürünü getir
+                // Ürünü veritabanından getiriyoruz
                 var product = await _productService.GetProductByIdAsync(orderProductRequest.ProductId);
+
+                // Ürün kontrolü: Ürün bulunamazsa hata döndür
                 if (product == null)
                 {
                     return BadRequest($"Ürün bulunamadı: {orderProductRequest.ProductId}");
                 }
 
-                // Ürün fiyatını ve miktarını kullanarak toplam tutarı güncelle
-                unitPrice = (int)(product?.Price ?? 0); // Ürün fiyatı yoksa 0 kabul edilir
+                // Ürün fiyatı yoksa 0 kabul edilir
+                var unitPrice = (int)(product?.Price ?? 0);
+
+                // Toplam tutarı güncelle
                 totalAmount += unitPrice * orderProductRequest.Quantity;
 
-                // Sipariş ürünü oluştur ve listeye ekle
+                // Sipariş ürününü oluştur ve listeye ekle
                 orderProducts.Add(new OrderProduct
                 {
-                    ProductId = orderProductRequest.ProductId,
-                    Quantity = orderProductRequest.Quantity,
-                    UnitPrice = unitPrice
+                    ProductId = orderProductRequest.ProductId, // Ürün kimliği
+                    Quantity = orderProductRequest.Quantity,   // Sipariş miktarı
+                    UnitPrice = unitPrice                      // Ürün fiyatı
                 });
             }
 
+            // Sipariş DTO'su oluşturuluyor
             var orderDto = new AddOrderDto
             {
-                CustomerId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value!),
-                TotalAmount = totalAmount,
-                OrderStatus = orderRequest.OrderStatus
+                CustomerId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Id")?.Value ?? "0"), // Kullanıcı kimliği
+                TotalAmount = totalAmount,    // Toplam sipariş tutarı
+                OrderStatus = orderRequest.OrderStatus // Sipariş durumu
             };
 
+            // Siparişi eklemek için servis çağrısı yapılıyor
             var result = await _orderService.AddOrderAsync(orderDto, orderProducts);
 
+            // İşlem sonucu kontrol ediliyor
             if (result.IsSucceed)
             {
-                return Ok(result.Message);
+                return Ok(result.Message); // Başarılı ise mesaj döndür
             }
             else
             {
-                return BadRequest(result.Message);
+                return BadRequest(result.Message); // Başarısız ise hata mesajı döndür
             }
         }
+
 
 
         // Siparişi Id ile getirme

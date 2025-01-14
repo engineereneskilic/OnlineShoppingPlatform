@@ -69,31 +69,44 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
                 };
             }
 
+            await _unitOfWork.BeginTransaction();
+
             var newOrder = new OrderEntity
             {
                 CustomerId = order.CustomerId,
                 TotalAmount = order.TotalAmount,
                 OrderStatus = order.OrderStatus
             };
-
-
+           
             try
             {
                 // Siparişi ekle
                 await _repository.AddAsync(newOrder);
+            }
+            catch (Exception)
+            {
 
-                // Sipariş ürünlerini ekle
-                foreach (var product in orderProducts)
-                {
-                    product.OrderId = newOrder.OrderId;
-                    await _orderproductRepository.AddAsync(product);
-                }
+                throw new Exception("Sipariş kaydı sırasında bir sorunla karşılaşıldı");
+            }
+
+            // Sipariş ürünlerini ekle
+            foreach (var product in orderProducts)
+            {
+                product.OrderId = newOrder.OrderId;
+                await _orderproductRepository.AddAsync(product);
+            }
+
+            try
+            {
+            
 
                 // Değişiklikleri kaydet
                 await _unitOfWork.DbSaveChangesAsync();
+                await _unitOfWork.CommitTransaction();
             }
             catch (Exception ex)
             {
+                await _unitOfWork.RollBackTransaction();
                 throw new Exception("Sipariş eklenirken bir hata oluştu: " + ex.Message);
             }
 

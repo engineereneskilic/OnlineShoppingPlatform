@@ -1,10 +1,13 @@
 ﻿using OnlineShoppingPlatform.Business.Validations;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace OnlineShoppingPlatform.Presentation.Models.Maintenance
 {
     public class UpdateMaintenanceRequest
     {
+
+        [JsonIgnore]
         public int MaintenanceId { get; set; } // Primary Key
 
         /// Bakım modunun aktiflik durumu (zorunlu).

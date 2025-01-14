@@ -9,6 +9,9 @@ using OnlineShoppingPlatform.Presentation.Models.Main;
 using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
 using OnlineShoppingPlatform.Business.Operations.Product;
 using OnlineShoppingPlatform.Presentation.Models.Maintenance;
+using OnlineShoppingPlatform.Business.Types;
+using OnlineShoppingPlatform.Business.Operations.User.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
@@ -55,9 +58,58 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
             }
         }
 
+   
+        [HttpGet("{id}")]
+        public async Task<ActionResult<MaintenanceInfoDto>> GetMaintenanceById(int id)
+        {
+            if (id <= 0)
+            {
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz Bakım ID'si."
+                });
+            }
+
+            var maintenance = await _maintenanceService.GetMaintenanceByIdAsync(id);
+
+            var productInfoDto = new MaintenanceInfoDto
+            {
+                MaintenanceId = maintenance.MaintenanceId,
+                IsActive = maintenance.IsActive,
+                Message = maintenance.Message,
+                StartTime = maintenance.StartTime,
+                EndTime = maintenance.EndTime
+            };
+
+            return Ok(productInfoDto);
+        }
+
+
+        [HttpGet("all")]
+        public async Task<ActionResult<List<MaintenanceInfoDto>>> GetAllMaintenance()
+        {
+
+            var maintenanceList = await _maintenanceService.GetAllMaintenanceAsync();
+
+            var productInfoDtoList = maintenanceList.Select(maintenance => new MaintenanceInfoDto
+            {
+               MaintenanceId = maintenance.MaintenanceId,
+               IsActive = maintenance.IsActive,
+               Message = maintenance.Message,
+               StartTime = maintenance.StartTime,
+               EndTime = maintenance.EndTime
+
+            }).ToList();
+
+
+            return Ok(productInfoDtoList!);
+
+        }
+
+
 
         [HttpPost]
-        [HttpPost("addmaintenance")]
         public async Task<IActionResult> AddMaintenanceMode([FromBody] AddMaintenanceRequest addMaintenanceRequest)
         {
             if (!ModelState.IsValid)
@@ -93,6 +145,15 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (id <= 0)
+            {
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz Bakım Kaydı ID'si."
+                });
+            }
+
             var updateMaintenanceDto = new UpdateMaintenanceDto
             {
                MaintenanceId = id,
@@ -102,26 +163,14 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                EndTime = updateMaintenanceRequest.EndTime,
             };
 
-            // Kontrol 1: Gönderilen ID ile ürünün ID'si eşleşiyor mu?
-            if (id != updateMaintenanceRequest.MaintenanceId)
-            {
-                return BadRequest("The provided ID does not match the product ID.");
-            }
+    
 
-            // Kontrol 2: Gönderilen ürün verisi null mı?
             if (updateMaintenanceDto == null)
             {
                return BadRequest("Maintenance data cannot be null.");
             }
 
-            // Kontrol 3: Veritabanında ürünün mevcut olup olmadığını kontrol et
 
-            var existingMaintenance = await _maintenanceService.GetMaintenanceByIdAsync(id);
-
-            if (existingMaintenance == null)
-            {
-                return NotFound("The Maintenance with the specified ID does not exist.");
-            }
 
             var result = await _maintenanceService.UpdateMaintenanceAsync(updateMaintenanceDto);
 
@@ -135,7 +184,7 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
 
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMaintenanceMode(int id)
         {
             if (id <= 0)

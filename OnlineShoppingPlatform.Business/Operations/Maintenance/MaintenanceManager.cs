@@ -128,7 +128,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Maintenance
             // id geçerli bir değer olup olmadığını kontrol et
             if (id <= 0)
             {
-                throw new ArgumentException("Geçersiz Bakım ID'si", nameof(id));
+                throw new ArgumentException("Geçersiz Bakım kaydı ID'si", nameof(id));
             }
 
             // Veritabanında ürünü arayın
@@ -137,7 +137,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Maintenance
             // Eğer ürün bulunmazsa, null kontrolü yapın
             if (maintenance == null)
             {
-                throw new KeyNotFoundException($"ID: {id} ile bir bakım bulunamadı.");
+                throw new KeyNotFoundException($"ID: {id} ile bir bakım kaydı bulunamadı.");
             }
 
             return maintenance;
@@ -164,8 +164,8 @@ namespace OnlineShoppingPlatform.Business.Operations.Maintenance
 
 
             var hasMaintenance = await _repository.GetByQueryAsync(
-                x => !string.IsNullOrEmpty(x.Message) &&
-                     x.Message.Equals(addMaintenanceDto.Message, StringComparison.OrdinalIgnoreCase)
+                x => !string.IsNullOrEmpty(x.Message) && !string.IsNullOrEmpty(addMaintenanceDto.Message) &&
+                     x.Message.ToLower() == addMaintenanceDto.Message.ToLower()
             );
 
             if (hasMaintenance.Any())
@@ -217,15 +217,22 @@ namespace OnlineShoppingPlatform.Business.Operations.Maintenance
                 };
             }
 
-            // Yeni mesaj veritabanında başka bir kayıtla eşleşiyor mu kontrol et
-            var query = await _repository.GetByQueryAsync(x =>
-                            x.MaintenanceId != updateMaintenanceDto.MaintenanceId &&
-                            (x.Message ?? string.Empty).Equals(updateMaintenanceDto.Message, StringComparison.OrdinalIgnoreCase)
-                        );
+            //// Yeni mesaj veritabanında başka bir kayıtla eşleşiyor mu kontrol et
+            //var query = await _repository.GetByQueryAsync(x =>
+            //                x.MaintenanceId != updateMaintenanceDto.MaintenanceId &&
+            //                (x.Message ?? string.Empty).Equals(updateMaintenanceDto.Message, StringComparison.OrdinalIgnoreCase)
+            //            );
 
-            var isMessageDuplicate = query.Any(); // IEnumerable üzerinden kontrol
+            var isMessageDuplicate = await _repository.GetByQueryAsync(
+                x => x.MaintenanceId != updateMaintenanceDto.MaintenanceId &&
+                     !string.IsNullOrEmpty(x.Message) && 
+                    !string.IsNullOrEmpty(updateMaintenanceDto.Message) &&
+                    x.Message.ToLower() == updateMaintenanceDto.Message.ToLower()
+           );
 
-            if (isMessageDuplicate)
+            //var isMessageDuplicate = query.Any(); // IEnumerable üzerinden kontrol
+
+            if (isMessageDuplicate.Any())
             {
                 return new ServiceMessage
                 {

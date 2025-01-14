@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace OnlineShoppingPlatform.Presentation.Models.Product
 {
     public class UpdateProductRequest
     {
-        [Required]
+        [JsonIgnore]
         public int ProductId { get; set; } // Primary Key
 
         [Required(ErrorMessage = "Product name is required.")]

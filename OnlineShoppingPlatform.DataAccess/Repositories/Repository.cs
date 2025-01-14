@@ -40,7 +40,8 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
             // If no entity is found, throw an exception or handle the null case
             if (entity == null)
             {
-                throw new InvalidOperationException($"Entity with ID {id} not found.");
+                //throw new InvalidOperationException($"Entity with ID {id} not found.");
+                return null;
             }
 
             return entity;
@@ -54,7 +55,8 @@ namespace OnlineShoppingPlatform.DataAccess.Repositories
             // Eğer entity bulunamazsa, özel bir durum fırlat
             if (entity == null)
             {
-                throw new InvalidOperationException($"Entity not found.");
+                // throw new InvalidOperationException($"Entity not found.");
+                return null;
             }
 
             return entity;

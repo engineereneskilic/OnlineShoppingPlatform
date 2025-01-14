@@ -120,7 +120,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User
             }
 
             var user = await _userepository.GetAsync(x => x.Email.ToLower() == loginUserDto.Email.ToLower());
-
+            
             if (user is null)
             {
                 return new ServiceMessage<UserInfoDto>
@@ -169,10 +169,10 @@ namespace OnlineShoppingPlatform.Business.Operations.User
 
         public async Task<UserEntity> GetUserByIdAsync(int id)
         {
-            if (id <= 0)
-            {
-                throw new ArgumentException("Geçersiz kullanıcı ID'si.");
-            }
+            //if (id <= 0)
+            //{
+            //    throw new ArgumentException("Geçersiz kullanıcı ID'si.");
+            //}
 
             var user = await _userepository.GetByIdAsync(id);
             if (user == null)
@@ -210,7 +210,7 @@ namespace OnlineShoppingPlatform.Business.Operations.User
             user.FirstName = updateUserDto.FirstName ?? user.FirstName;
             user.LastName = updateUserDto.LastName ?? user.LastName;
             user.Email = updateUserDto.Email ?? user.Email;
-            user.Password = _dataProtector.Protect(updateUserDto.Password) ?? _dataProtector.Protect(user.Password);
+            user.Password = _dataProtector.Protect(updateUserDto.Password) ?? user.Password;
             user.BirthDate = updateUserDto?.BirthDate ?? user.BirthDate;
             user.PhoneNumber = updateUserDto?.PhoneNumber ?? user.PhoneNumber;
 

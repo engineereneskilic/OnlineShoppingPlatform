@@ -5,10 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OnlineShoppingPlatform.DataAccess.Entities;
 
 namespace OnlineShoppingPlatform.DataAccess.Maintenance
 {
-    public class MaintenanceMode
+    public class MaintenanceMode : BaseEntity
     {
         [Key]
         //[JsonIgnore] // Bu property'nin JSON çıktısında görünmemesini sağlar
@@ -24,5 +26,14 @@ namespace OnlineShoppingPlatform.DataAccess.Maintenance
         public DateTime StartTime { get; set; } // Bakımın başlangıç zamanı
 
         public DateTime? EndTime { get; set; } // Bakımın bitiş zamanı (nullable)
+    }
+
+    public class MaintenanceConfiguration : BaseConfigiration<MaintenanceMode>
+    {
+        public override void Configure(EntityTypeBuilder<MaintenanceMode> builder)
+        {
+            base.Configure(builder);
+
+        }
     }
 }

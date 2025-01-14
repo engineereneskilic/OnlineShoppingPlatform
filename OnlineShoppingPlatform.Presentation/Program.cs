@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OnlineShoppingPlatform.Business.DataProtection;
+using OnlineShoppingPlatform.Business.Operations.Maintenance;
 using OnlineShoppingPlatform.Business.Operations.Order;
 using OnlineShoppingPlatform.Business.Operations.Product;
 using OnlineShoppingPlatform.Business.Operations.User;
@@ -28,6 +29,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserManager>();
 builder.Services.AddScoped<IProductService, ProductManager>();
 builder.Services.AddScoped<IOrderService, OrderManager>();
+
+builder.Services.AddScoped<IMaintenance, MaintenanceManager>();
 
 
 
@@ -129,8 +132,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseMiddleware<LoggingMiddleware>(); // Ýstekler önce loglanýr
-app.UseMiddleware<MaintenanceMiddleware>(); // Bakým modunu kontrol eden middleware
+//app.UseMiddleware<LoggingMiddleware>(); // Ýstekler önce loglanýr
+//app.UseMiddleware<MaintenanceMiddleware>(); // Bakým modunu kontrol eden middleware
 
 // Use Authentication and Authorization
 app.UseAuthentication();

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Newtonsoft.Json;
-using OnlineShoppingPlatform.Business.Validations;
 using OnlineShoppingPlatform.DataAccess.Entities.Enums;
 using OnlineShoppingPlatform.DataAccess.Logging;
 using System;
@@ -61,6 +60,15 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
         //public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         //public DateTime? UpdatedAt { get; set; }
 
+    }
+
+    public class UserConfiguration : BaseConfigiration<User>
+    {
+        public override void Configure(EntityTypeBuilder<User> builder)
+        {
+            base.Configure(builder);
+
+        }
     }
 
 

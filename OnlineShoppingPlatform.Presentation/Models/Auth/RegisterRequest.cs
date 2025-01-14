@@ -43,7 +43,6 @@ namespace OnlineShoppingPlatform.Presentation.Models.Auth
         //public UserRole Role { get; set; } // Kullanıcı rolü
 
         [Required(ErrorMessage = "BirthDate is required.")]
-        [JsonConverter(typeof(CustomDateTimeConverter))]
         public DateTime BirthDate { get; set; }
 
 

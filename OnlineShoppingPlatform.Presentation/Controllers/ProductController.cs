@@ -8,6 +8,8 @@ using OnlineShoppingPlatform.Business.Operations.Product;
 using OnlineShoppingPlatform.Presentation.Models.Product;
 using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
 using Microsoft.AspNetCore.Authorization;
+using System.Reflection.Metadata.Ecma335;
+using OnlineShoppingPlatform.Business.Types;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
@@ -55,24 +57,50 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         // Ürün Id ile getirme
         [Authorize]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProductById(int id)
+        public async Task<ActionResult<ProductInfoDto>> GetProductById(int id)
         {
- 
-            var product = await _productService.GetProductByIdAsync(id);
-            if(product == null)
+            if (id <= 0)
             {
-                return NotFound();
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz ürün ID'si."
+                });
             }
 
-            return product;
+            var product = await _productService.GetProductByIdAsync(id);
+
+            var productInfoDto = new ProductInfoDto
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity
+            };
+
+            return Ok(productInfoDto);
         }
 
         // Ürünleri listeleme
         [Authorize]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetAllProducts()
+        [HttpGet("all")]
+        public async Task<ActionResult<List<ProductInfoDto>>> GetAllProducts()
         {
-            return await _productService.GetAllProductsAsync();
+
+            var productList= await _productService.GetAllProductsAsync();
+
+            var productInfoDtoList = productList.Select(product => new ProductInfoDto
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity
+
+            }).ToList();
+
+
+            return Ok(productInfoDtoList!);
+
         }
 
         // Ürün güncelleme
@@ -85,6 +113,16 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (id <= 0)
+            {
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz ürün ID'si."
+                });
+            }
+
+
             var updateProductDto = new UpdateProductDto
             {
                 ProductId = id,
@@ -93,25 +131,10 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
                 StockQuantity = productRequest.StockQuantity
             };
 
-            // Kontrol 1: Gönderilen ID ile ürünün ID'si eşleşiyor mu?
-            if (id != productRequest.ProductId)
-            {
-                return BadRequest("The provided ID does not match the product ID.");
-            }
 
-            // Kontrol 2: Gönderilen ürün verisi null mı?
             if (updateProductDto == null)
             {
                 return BadRequest("Product data cannot be null.");
-            }
-
-            // Kontrol 3: Veritabanında ürünün mevcut olup olmadığını kontrol et
-                
-            var existingProduct = await _productService.GetProductByIdAsync(id);
-                
-            if (existingProduct == null)    
-            {
-                return NotFound("The product with the specified ID does not exist.");
             }
             
             var result = await _productService.UpdateProductAsync(updateProductDto);
@@ -130,21 +153,15 @@ namespace OnlineShoppingPlatform.Presentation.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            // Kontrol 1: Geçerli bir ID gönderildi mi?
             if (id <= 0)
             {
-                return BadRequest("The provided ID is invalid.");
+                return BadRequest(new ServiceMessage
+                {
+                    IsSucceed = false,
+                    Message = "Geçersiz ürün ID'si."
+                });
             }
 
-            // Kontrol 2: Veritabanında ürünün mevcut olup olmadığını kontrol et
-            var existingProduct = await _productService.GetProductByIdAsync(id);
-
-            if (existingProduct == null)
-            {
-                return NotFound("The product with the specified ID does not exist.");
-            }
-
-            // Silme işlemini gerçekleştir
             var result = await _productService.DeleteProductAsync(id);
 
             if (result.IsSucceed)

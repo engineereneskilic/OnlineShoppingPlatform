@@ -11,7 +11,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Maintenance.Dtos
     public class MaintenanceInfoDto
     {
 
-        public int MaintenanceId;
+        public int MaintenanceId { get; set; }
 
 
         /// Bakım modunun aktiflik durumu (zorunlu).

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
+﻿using OnlineShoppingPlatform.Business.Operations.Product.Dtos;
 using OnlineShoppingPlatform.Business.Types;
 using OnlineShoppingPlatform.DataAccess.Repositories;
 using OnlineShoppingPlatform.DataAccess.UnitOfWork;
@@ -29,11 +28,6 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
         public async Task<ProductEntity> GetProductByIdAsync(int id)
         {
 
-            // id geçerli bir değer olup olmadığını kontrol et
-            if (id <= 0)
-            {
-                throw new ArgumentException("Geçersiz ürün ID'si", nameof(id));
-            }
 
             // Veritabanında ürünü arayın
             var product = await _repository.GetByIdAsync(id);
@@ -69,9 +63,10 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
         public async Task<ServiceMessage> AddProductAsync(AddProductDto addProductDto)
         {
 
-            var HasProduct = await _repository.GetByQueryAsync(x => x.ProductName.Equals(addProductDto.ProductName, StringComparison.OrdinalIgnoreCase));
-            
-            if(HasProduct.Any())
+            var hasProduct = await _repository.GetByQueryAsync(x =>
+                x.ProductName.ToLower() == addProductDto.ProductName.ToLower());
+
+            if (hasProduct.Any())
             {
                 return new ServiceMessage
                 {
@@ -123,7 +118,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
 
             // Aynı isimde başka bir ürün var mı kontrol et (aynı ID'ye sahip olmayan)
             var hasDuplicateProduct = await _repository.GetByQueryAsync(x =>
-                x.ProductName.Equals(updateProductDto.ProductName, StringComparison.OrdinalIgnoreCase) &&
+                x.ProductName.ToLower() == updateProductDto.ProductName.ToLower() &&
                 x.ProductId != updateProductDto.ProductId);
 
             if (hasDuplicateProduct.Any())

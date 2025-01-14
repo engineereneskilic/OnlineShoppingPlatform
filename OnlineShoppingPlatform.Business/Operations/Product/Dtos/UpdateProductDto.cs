@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace OnlineShoppingPlatform.Business.Operations.Product.Dtos
 {
     public class UpdateProductDto
     {
+      
         public int ProductId { get; set; } // Primary Key
 
         [Required(ErrorMessage = "Product name is required.")]

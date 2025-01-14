@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using OnlineShoppingPlatform.Business.Validations;
 
 namespace OnlineShoppingPlatform.Presentation.Models.User
 {
     public class UpdateUserRequest
     {
-        [Required]
+        [JsonIgnore]
         public int UserId { get; set; } // Primary Key 
 
         [Required(ErrorMessage = "User name is required.")]
@@ -40,7 +42,6 @@ namespace OnlineShoppingPlatform.Presentation.Models.User
         //public UserRole Role { get; set; } // Kullanıcı rolü
 
         [Required(ErrorMessage = "BirthDate is required.")]
-        [Range(typeof(DateTime), "1/1/1900", "12/31/2025", ErrorMessage = "BirthDate must be between 01/01/1900 and 12/31/2025.")]
         public DateTime BirthDate { get; set; }
     }
 }
