@@ -25,7 +25,7 @@ namespace OnlineShoppingPlatform.Presentation.Filters
                 {
                     Content = $"API requests are allowed only between {_startTime} and {_endTime}.",
                     ContentType = "text/plain",
-                    StatusCode = 403 // Forbidden
+                    StatusCode = 403 
                 };
             }
         }

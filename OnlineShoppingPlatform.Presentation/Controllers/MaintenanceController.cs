@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace OnlineShoppingPlatform.Presentation.Controllers
 {
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class MaintenanceController : ControllerBase

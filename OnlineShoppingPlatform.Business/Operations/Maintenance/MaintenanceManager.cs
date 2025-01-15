@@ -295,6 +295,9 @@ namespace OnlineShoppingPlatform.Business.Operations.Maintenance
             };
         }
 
-      
+        public async Task<int> GetTotalCountMaintenances()
+        {
+            return await _repository.GetTotalCountsAsync();
+        }
     }
 }

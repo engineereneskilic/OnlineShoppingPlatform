@@ -22,5 +22,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Maintenance
 
         Task<ServiceMessage> UpdateMaintenanceAsync(UpdateMaintenanceDto updateMaintenanceDto);
         Task<ServiceMessage> DeleteMaintenanceAsync(int id);
+
+        Task<int> GetTotalCountMaintenances();
     }
 }

@@ -16,6 +16,8 @@ using OnlineShoppingPlatform.DataAccess.Maintenance;
 using OnlineShoppingPlatform.DataAccess.Repositories;
 using OnlineShoppingPlatform.DataAccess.UnitOfWork;
 using OnlineShoppingPlatform.Presentation.Filters;
+using OnlineShoppingPlatform.Presentation.Middlewares.GlobalException;
+using OnlineShoppingPlatform.Presentation.Middlewares.Maintenance;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -121,6 +123,8 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+
+
 app.UseRouting();
 
 // Enable CORS
@@ -132,9 +136,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<MaintenanceMiddleware>(); // Middleware burada eklenmeli
+
+
 //app.UseMiddleware<LoggingMiddleware>(); // Ýstekler önce loglanýr
 //app.UseMiddleware<MaintenanceMiddleware>(); // Bakým modunu kontrol eden middleware
-
 // Use Authentication and Authorization
 app.UseAuthentication();
 app.UseAuthorization();

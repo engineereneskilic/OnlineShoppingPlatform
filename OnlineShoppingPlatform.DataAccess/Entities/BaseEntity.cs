@@ -16,7 +16,7 @@ namespace OnlineShoppingPlatform.DataAccess.Entities
         }
 
         // public int Id { get; set; } // Primary Key
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow; // Oluşturulma zamanı
+        public DateTime CreatedDate { get; set; } = DateTime.Now; // Oluşturulma zamanı
         public DateTime? ModifiedDate { get; set; } // Güncellenme zamanı
         public bool IsDeleted { get; set; }
     }

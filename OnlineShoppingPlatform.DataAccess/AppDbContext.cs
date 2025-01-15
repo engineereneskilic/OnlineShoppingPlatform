@@ -3,9 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using OnlineShoppingPlatform.DataAccess.Entities;
 using OnlineShoppingPlatform.DataAccess.Logging;
 using OnlineShoppingPlatform.DataAccess.Maintenance;
+using OnlineShoppingPlatform.DataAccess.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,7 +18,7 @@ namespace OnlineShoppingPlatform.DataAccess
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
-
+            
         }
 
         // DbSet tanımlamaları (Tablolar)
@@ -49,6 +51,12 @@ namespace OnlineShoppingPlatform.DataAccess
             modelBuilder.ApplyConfiguration(new RequestLogConfiguration());
 
 
+
+            ConfigureSeedDatasAsync(modelBuilder);
+
+
+
+
             base.OnModelCreating(modelBuilder);
 
             // ÖZEL DÜZELTMELER
@@ -60,6 +68,20 @@ namespace OnlineShoppingPlatform.DataAccess
             // EK İNDİSLER
             ConfigureIndexes(modelBuilder);
 
+        }
+
+        private void ConfigureSeedDatasAsync(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<MaintenanceMode>().HasData(
+                   new MaintenanceMode
+                   {
+                       MaintenanceId = -1,
+                       IsActive = true,
+                       Message = "İlk kurulum bakımı (Varsayılan olarak)",
+                       StartTime = DateTime.Now,
+                       EndTime = DateTime.Now.AddHours(1)
+                   }
+                );
         }
 
         private void ConfigurePrecisionSettings(ModelBuilder modelBuilder)

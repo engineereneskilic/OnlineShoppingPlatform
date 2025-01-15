@@ -104,9 +104,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
                 CustomerId = addOrderDto.CustomerId,
                 TotalAmount = addOrderDto.TotalAmount,
                 OrderStatus = addOrderDto.OrderStatus,
-                User = CurrentUser,
-               
-
+                User = CurrentUser
             };
            
             try
@@ -134,7 +132,6 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
 
             try
             {
-            
 
                 // Değişiklikleri kaydet
                 await _unitOfWork.DbSaveChangesAsync();
@@ -210,6 +207,8 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
             // 4. Güncellenen siparişi ve ürünleri kaydet
             try
             {
+                await _unitOfWork.BeginTransaction();
+
                 await _unitOfWork.DbSaveChangesAsync();  // Değişiklikleri kaydet
 
                 // Total Amount Güncelle
@@ -217,11 +216,16 @@ namespace OnlineShoppingPlatform.Business.Operations.Order
 
                 await _unitOfWork.DbSaveChangesAsync();  // Değişiklikleri kaydet
 
+                await _unitOfWork.CommitTransaction();
+
             }
             catch (Exception)
             {
+
+                await _unitOfWork.RollBackTransaction();
                 return new ServiceMessage
                 {
+                    
                     IsSucceed = false,
                     Message = "Siparişi güncellerken bir hata oluştu."
                 };
