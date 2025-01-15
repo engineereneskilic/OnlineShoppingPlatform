@@ -7,7 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
+
 using ProductEntity = OnlineShoppingPlatform.DataAccess.Entities.Product;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace OnlineShoppingPlatform.Business.Operations.Product
@@ -15,14 +18,21 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
     public class ProductManager : IProductService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IRepository<ProductEntity> _repository; 
+        private readonly IRepository<ProductEntity> _repository;
+
+        private readonly IMemoryCache _cache;
+
+        private const string CacheKey = "Products";
 
 
 
-        public ProductManager(IUnitOfWork unitOfWork,IRepository<ProductEntity> repository)
+
+        public ProductManager(IUnitOfWork unitOfWork,IRepository<ProductEntity> repository, IMemoryCache cache)
         {
             _unitOfWork = unitOfWork;
             _repository = repository;
+            _cache = cache;
+
         }
 
         public async Task<ProductEntity> GetProductByIdAsync(int id)
@@ -46,16 +56,31 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
 
         public async Task<List<ProductEntity>> GetAllProductsAsync()
         {
-            // Tüm ürünleri veritabanından getir
-            var products = (await _repository.GetAllAsync());
 
-            // Eğer hiçbir ürün bulunamazsa, boş bir liste döndür
-            if (products == null || !products.Any())
+            // Cache kontrolü
+            if (!_cache.TryGetValue(CacheKey, out List<ProductEntity> products))
             {
-                throw new KeyNotFoundException("Veritabanında hiçbir ürün bulunamadı.");
+                // Cache'te yoksa veri tabanından al
+                products = (await _repository.GetAllAsync()).ToList();
+
+                if (products == null || !products.Any())
+                {
+                    throw new KeyNotFoundException("Veritabanında hiçbir ürün bulunamadı.");
+                }
+
+                // Cache'e ekle ve geçerlilik süresi belirle
+                var cacheEntryOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10), // 10 dakika geçerli
+                    SlidingExpiration = TimeSpan.FromMinutes(2) // 2 dakika işlem olmazsa geçersiz
+                };
+
+                _cache.Set(CacheKey, products, cacheEntryOptions);
             }
 
-            return products.ToList();
+            
+
+            return products!;
         }
 
 
@@ -88,6 +113,9 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
             {
                 await _repository.AddAsync(newproduct);
                 await _unitOfWork.DbSaveChangesAsync();
+
+                // Cache'i temizle
+                _cache.Remove(CacheKey);
 
             }
             catch (Exception)
@@ -139,6 +167,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
             {
                 await _repository.UpdateAsync(existingProduct);
                 await _unitOfWork.DbSaveChangesAsync();
+                _cache.Remove(CacheKey);
             }
             catch (Exception)
             {
@@ -170,6 +199,7 @@ namespace OnlineShoppingPlatform.Business.Operations.Product
                 // Ürünü sil
                 await _repository.DeleteAsync(existingProduct);
                 await _unitOfWork.DbSaveChangesAsync();
+                _cache.Remove(CacheKey);
             }
             catch (Exception)
             {

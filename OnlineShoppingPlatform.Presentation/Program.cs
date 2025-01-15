@@ -17,10 +17,14 @@ using OnlineShoppingPlatform.DataAccess.Repositories;
 using OnlineShoppingPlatform.DataAccess.UnitOfWork;
 using OnlineShoppingPlatform.Presentation.Filters;
 using OnlineShoppingPlatform.Presentation.Middlewares.GlobalException;
+using OnlineShoppingPlatform.Presentation.Middlewares.Logging;
 using OnlineShoppingPlatform.Presentation.Middlewares.Maintenance;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// MemoryCache servisini ekle
+builder.Services.AddMemoryCache();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -130,6 +134,9 @@ app.UseRouting();
 // Enable CORS
 app.UseCors();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<MaintenanceMiddleware>(); // Middleware burada eklenmeli
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -137,8 +144,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
-app.UseMiddleware<MaintenanceMiddleware>(); // Middleware burada eklenmeli
+
 
 
 //app.UseMiddleware<LoggingMiddleware>(); // Ýstekler önce loglanýr
@@ -146,6 +152,9 @@ app.UseMiddleware<MaintenanceMiddleware>(); // Middleware burada eklenmeli
 // Use Authentication and Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<LoggingMiddleware>();
+
 
 app.MapControllers();
 

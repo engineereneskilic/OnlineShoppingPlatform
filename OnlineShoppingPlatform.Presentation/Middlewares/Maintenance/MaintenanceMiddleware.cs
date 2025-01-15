@@ -17,6 +17,8 @@ namespace OnlineShoppingPlatform.Presentation.Middlewares.Maintenance
 
         public async Task InvokeAsync(HttpContext context)
         {
+            Console.WriteLine("Maintanence içerde");
+
             var requestPath = context.Request.Path.ToString().ToLower();
 
             // Bakım modu kontrüllerinde bakım modu kontrolü yapmaya gerek yoktur
