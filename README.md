@@ -240,8 +240,8 @@ services.AddScoped<IOrderRepository, OrderRepository>();
 ### **Users**
 | HTTP Method | Endpoint             | Description                          | Authentication |
 |-------------|----------------------|--------------------------------------|----------------|
-| POST        | /api/users/register | Registers a new user                 | No             |
-| POST        | /api/users/login    | Logs in and generates a JWT token    | No             |
+| POST        | /api/users/register | Registers a new user                 | Admin             |
+| POST        | /api/users/login    | Logs in and generates a JWT token    | Admin             |
 | GET         | /api/users          | Retrieves all users (Admin only)     | Admin          |
 | GET         | /api/users/{id}     | Retrieves a specific user by ID      | Admin          |
 | DELETE      | /api/users/{id}     | Deletes a specific user (Admin only) | Admin          |
@@ -249,8 +249,8 @@ services.AddScoped<IOrderRepository, OrderRepository>();
 ### **Products**
 | HTTP Method | Endpoint             | Description                          | Authentication |
 |-------------|----------------------|--------------------------------------|----------------|
-| GET         | /api/products        | Retrieves a paginated list of products | No           |
-| GET         | /api/products/{id}   | Retrieves a specific product by ID   | No             |
+| GET         | /api/products        | Retrieves a paginated list of products | Customer/Admin           |
+| GET         | /api/products/{id}   | Retrieves a specific product by ID   | Customer/Admin             |
 | POST        | /api/products        | Adds a new product (Admin only)      | Admin          |
 | PUT         | /api/products/{id}   | Updates an existing product (Admin only) | Admin     |
 | DELETE      | /api/products/{id}   | Deletes a product (Admin only)       | Admin          |
@@ -258,15 +258,15 @@ services.AddScoped<IOrderRepository, OrderRepository>();
 ### **Orders**
 | HTTP Method | Endpoint             | Description                          | Authentication |
 |-------------|----------------------|--------------------------------------|----------------|
-| GET         | /api/orders          | Retrieves all orders for the current user | Customer  |
-| GET         | /api/orders/{id}     | Retrieves a specific order by ID     | Customer       |
-| POST        | /api/orders          | Places a new order                   | Customer       |
-| DELETE      | /api/orders/{id}     | Cancels a specific order             | Customer       |
+| GET         | /api/orders          | Retrieves all orders for the current user | Customer/Admin  |
+| GET         | /api/orders/{id}     | Retrieves a specific order by ID     | Customer/Admin       |
+| POST        | /api/orders          | Places a new order                   | Customer/Admin       |
+| DELETE      | /api/orders/{id}     | Cancels a specific order             | Customer/Admin       |
 
 ### **Maintenance**
 | HTTP Method | Endpoint                   | Description                                  | Authentication |
 |-------------|----------------------------|----------------------------------------------|----------------|
-| GET         | /api/maintenance           | Retrieves maintenance mode status           | No             |
+| GET         | /api/maintenance           | Retrieves maintenance mode status           | Admin             |
 | POST        | /api/maintenance           | Enables maintenance mode (Admin only)       | Admin          |
 | DELETE      | /api/maintenance           | Disables maintenance mode (Admin only)      | Admin          |
 | PUT         | /api/maintenance/toggle/{id}| Toggles maintenance mode status by ID       | Admin          |
