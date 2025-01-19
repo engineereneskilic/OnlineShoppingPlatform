@@ -1,7 +1,7 @@
 
 # Multiple Layered ASP.NET Core API Project - Online Shopping Platform
 
-![**Online Shopping Platform (Image)**](Online-Shopping-Platform.webp)  
+![**Online Shopping Platform (Image)**](Online- Shopping- Platform.webp)  
 Presentation Video Set: https://youtu.be/IFjqKfrcIcM
 
 ## Table of Contents
