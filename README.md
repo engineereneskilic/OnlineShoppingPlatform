@@ -1,6 +1,7 @@
 
 # Multiple Layered ASP.NET Core API Project - Online Shopping Platform
 
+![**Pre-Accounting Automation (Image)**](Online-Shopping-Platform.JPG)  
 Presentation Video Set: https://youtu.be/IFjqKfrcIcM
 
 ## Table of Contents
